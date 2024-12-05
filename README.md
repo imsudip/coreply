@@ -17,6 +17,8 @@
 -   Tinder
 -   Hinge
 
+_DISCLAIMER: coreply is not affiliated with or endorsed by WhatsApp, Instagram, Tinder, or Hinge._
+
 ## Getting Started
 
 ### Prerequisites
@@ -62,7 +64,7 @@ All contributions are welcome! However, the code was based on an old project in 
 
 -   The app cannot read images, videos, voice notes, or other non-text content. Contextual suggestions may be limited in these cases.
 -   Autofill suggestions in WhatsApp on a non-English locale may include extra words. This is a known issue and will be fixed in a future release.
--   Banking apps in asia commonly block apps from unknown sources having accessibility services permission due to security reasons. If you are facing this issue, you can setup [pyan accessibility shortcut](https://support.google.com/accessibility/android/answer/7650693?hl=en#step_1) to toggle the coreply on/off quickly. In the future there might be a Play Store listing to avoid this issue.
+-   Banking apps in asia commonly block apps from unknown sources having accessibility services permission due to security reasons. If you are facing this issue, you can setup [an accessibility shortcut](https://support.google.com/accessibility/android/answer/7650693?hl=en#step_1) to toggle the coreply on/off quickly. In the future there might be a Play Store listing to avoid this issue.
 
 ## License
 
