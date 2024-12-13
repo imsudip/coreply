@@ -1,4 +1,4 @@
-![coreply banner](./docs/static/coreply_banner.svg)
+![coreply banner](./docs/static/coreply_banner.png)
 
 **coreply** is an open-source Android app designed to make texting faster and smarter by providing AI-generated auto-fill suggestions while you type. Whether you're replying to friends, family, or colleagues, coreply enhances your typing experience with intelligent, context-aware suggestions.
 
@@ -66,7 +66,7 @@ All contributions are welcome! However, the code was based on an old project in 
 -   Autofill suggestions in WhatsApp on a non-English locale may include extra words. This is a known issue and will be fixed in a future release.
 -   Banking apps in asia commonly block apps from unknown sources having accessibility services permission due to security reasons. If you are facing this issue, you can setup [an accessibility shortcut](https://support.google.com/accessibility/android/answer/7650693?hl=en#step_1) to toggle the coreply on/off quickly. In the future there might be a Play Store listing to avoid this issue.
 
-## License
+## License Notice
 
 coreply
 
