@@ -49,6 +49,13 @@ _DISCLAIMER: coreply is not affiliated with or endorsed by WhatsApp, Instagram, 
 -   Gemma 2's non-English abilities seems slightly better the llama 3 family, but llama 3.1 has slightly better English abilities based on my testing.
 -   GPT-4o and xAI's Grok provides really good suggestions but beware of the cost.
 
+## Example setup with Groq
+
+1. Get your API Keys [here](https://console.groq.com/keys)
+2. In the coreply app, set the API Endpoint to `https://api.groq.com/openai/v1/` and the model name to `gemma2-9b-it`, `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, or any other model listed [here](https://console.groq.com/docs/models)
+3. Set the API Key to the key you got in step 1.
+4. Grant the necessary permissions as described in the installation section. And you are good to go!
+
 ## Contributing
 
 All contributions are welcome! However, the code was based on an old project in 2016, so please be patient with the code quality and expect major architectural changes in the future.

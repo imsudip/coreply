@@ -21,3 +21,4 @@
 }
 -keep public class com.google.ads.** {*;}
 -keep public class com.google.android.gms.** {*;}
+-dontwarn org.slf4j.impl.StaticLoggerBinder
