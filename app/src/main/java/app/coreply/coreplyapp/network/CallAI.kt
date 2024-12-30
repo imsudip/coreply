@@ -141,7 +141,7 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
             messages = listOf(
                 ChatMessage(
                     role = ChatRole.System,
-                    content = PreferenceHelper["customSystemPrompt","You are now texting others. Output the remaining part of the reply sentence only. Include a leading space if needed. Do not output anything else except the reply text."]
+                    content = PreferenceHelper["customSystemPrompt","You are now texting a user. The symbol '>>' Indicates the start of a message, or the end of the message turn.\n'//' indicates a comment line, which describes the message in the next line.\n\nFor example:\n>>Hello\n// Next line is a message starting with 'Fre':\n>>Free now?\n>>\n\nYour output should always adhere to the given format, and match the tone and style of the text."]
                 ))+typingInfo.pastMessages.getCoreplyFormat(typingInfo),
 
             stop = listOf("\n", ">>","//",",",".","?","!"),
