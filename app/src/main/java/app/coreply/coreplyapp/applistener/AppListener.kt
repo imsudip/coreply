@@ -79,8 +79,9 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
         overlay!!.removeViews()
     }
 
-    private fun measureWindow(node: AccessibilityNodeInfo) {
+    private fun measureWindow(node: AccessibilityNodeInfo): Boolean {
         val rect = Rect()
+        var isHintText = false
         node.getBoundsInScreen(rect)
         // Use EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY to get the cursor position
         val arguments = Bundle()
@@ -116,22 +117,24 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
                     }
                 }
             } else {
+                isHintText = true
                 Log.v("CoWA", "Rect array is null")
             }
         } else {
             Log.v("CoWA", "Failed to refresh cursor position")
         }
-        if (node.isShowingHintText() || node.getText().toString() == "Message") {
+        if (node.isShowingHintText() || isHintText) {
             rect.left = rect.left + 200
         }
         Log.v("CoWA", "Text Node: " + node.getText())
         overlay!!.setRect(rect)
         overlay!!.update()
+        return isHintText
     }
 
-    private fun onEditTextUpdate(node: AccessibilityNodeInfo) {
+    private fun onEditTextUpdate(node: AccessibilityNodeInfo, isHintText: Boolean) {
         var actualMessage = node.getText().toString().replace("Compose Message", "")
-        if (actualMessage == "Message" || node.isShowingHintText()) {
+        if (isHintText || node.isShowingHintText()) {
             actualMessage = ""
         }
         currentText = actualMessage
@@ -141,7 +144,7 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
             overlay!!.updateSuggestion("")
             ai.onUserInputChanged(TypingInfo(conversationList, actualMessage))
         }
-        overlay!!.setNode(node)
+        overlay!!.setNode(node,isHintText)
     }
 
     private fun refreshOverlay(event: AccessibilityEvent, root: AccessibilityNodeInfo): Boolean {
@@ -157,7 +160,7 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
 
                 val triggerWidget = triggerWidgetList.get(0)
 
-                measureWindow(triggerWidget)
+                val isHintText = measureWindow(triggerWidget)
                 var actualMessage =
                     triggerWidget.getText().toString().replace("Compose Message", "")
                 if (actualMessage == "Message") {
@@ -167,11 +170,11 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
                     if (getMessages(root)) {
                         ai.suggestionStorage.clearSuggestion()
                     }
-                    onEditTextUpdate(triggerWidget)
+                    onEditTextUpdate(triggerWidget, isHintText)
                 } else if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && event.getPackageName() == currentApp!!.pkgName) {
                     val refreshMessageList = getMessages(root)
                     if (refreshMessageList || actualMessage != currentText) {
-                        onEditTextUpdate(triggerWidget)
+                        onEditTextUpdate(triggerWidget, isHintText)
                     }
                     if (refreshMessageList) {
                         ai.suggestionStorage.clearSuggestion()
@@ -206,27 +209,29 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
             rect1.top - rect2.top
         })
 
-        var left = -1
-        var right = -1
+//        var left = -1
+//        var right = -1
+//        for (chatNodeInfo in chatWidgets) {
+//            val bounds = Rect()
+//            chatNodeInfo.getBoundsInScreen(bounds)
+//            if (left == -1) {
+//                left = bounds.left
+//                right = bounds.right
+//            } else {
+//                if (bounds.left < left) {
+//                    left = bounds.left
+//                }
+//                if (bounds.right > right) {
+//                    right = bounds.right
+//                }
+//            }
+//        }
+        val rootRect = Rect()
+        rootInActiveWindow.getBoundsInScreen(rootRect)
         for (chatNodeInfo in chatWidgets) {
             val bounds = Rect()
             chatNodeInfo.getBoundsInScreen(bounds)
-            if (left == -1) {
-                left = bounds.left
-                right = bounds.right
-            } else {
-                if (bounds.left < left) {
-                    left = bounds.left
-                }
-                if (bounds.right > right) {
-                    right = bounds.right
-                }
-            }
-        }
-        for (chatNodeInfo in chatWidgets) {
-            val bounds = Rect()
-            chatNodeInfo.getBoundsInScreen(bounds)
-            val isMe = bounds.right == right
+            val isMe = (bounds.left+bounds.right)/2 > (rootRect.left+rootRect.right)/2
             val message_text = chatNodeInfo.getText().toString()
             chatMessages.add(ChatMessage(if (isMe) "Me" else "Others", message_text, ""))
         }

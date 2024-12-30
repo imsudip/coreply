@@ -1,6 +1,7 @@
 package app.coreply.coreplyapp.utils
 
 import android.util.Log
+import app.coreply.coreplyapp.network.TypingInfo
 
 class ChatContents {
     // Contains a list of ChatMessage objects
@@ -17,21 +18,21 @@ class ChatContents {
         if (chatContents.size < 1 || other.size < 1) {
             chatContents = other
             return true
-        } else{
+        } else {
             // Append new messages to the chatContents list
-            if (other[0] in chatContents){
+            if (other[0] in chatContents) {
                 var newEnd = false
-                for (i in other){
-                    if (i !in chatContents){
+                for (i in other) {
+                    if (i !in chatContents) {
                         chatContents.add(i)
                         newEnd = true
                     }
                 }
                 return newEnd
-            } else if (chatContents[0] in other){
+            } else if (chatContents[0] in other) {
                 // Insert new messages to the top of chatContents list
-                for (i in chatContents){
-                    if (i !in other){
+                for (i in chatContents) {
+                    if (i !in other) {
                         other.add(i)
                     }
                 }
@@ -43,17 +44,68 @@ class ChatContents {
             }
         }
     }
+
     fun getOpenAIFormat(): MutableList<com.aallam.openai.api.chat.ChatMessage> {
         Log.v("ChatContents", chatContents.toString())
-        return chatContents.map { com.aallam.openai.api.chat.ChatMessage(
-            role = it.getRole(),
-            content = it.message
-        ) }.toMutableList()
+        return chatContents.map {
+            com.aallam.openai.api.chat.ChatMessage(
+                role = it.getRole(),
+                content = it.message
+            )
+        }.toMutableList()
+    }
+
+    fun getCoreplyFormat(typingInfo: TypingInfo): MutableList<com.aallam.openai.api.chat.ChatMessage> {
+        var msgBlock: String = ">>"
+        val msgList: MutableList<com.aallam.openai.api.chat.ChatMessage> = mutableListOf()
+        for (i in 0..chatContents.size - 1) {
+            msgBlock += chatContents[i].message + "\n>>"
+            if (i == chatContents.size - 1) {
+                if (chatContents[i].sender == "Me") {
+                    if (!typingInfo.currentTyping.isBlank()) {
+                        msgBlock = msgBlock.substring(0, msgBlock.length - 2)
+                        msgBlock += "// Next line is a message starting with: ${typingInfo.currentTyping}\n>>"
+                    }
+                    msgBlock += typingInfo.currentTypingTrimmed
+                    msgList.add(
+                        com.aallam.openai.api.chat.ChatMessage(
+                            role = com.aallam.openai.api.chat.ChatRole.Assistant,
+                            content = msgBlock
+                        )
+                    )
+                } else {
+                    msgList.add(
+                        com.aallam.openai.api.chat.ChatMessage(
+                            role = com.aallam.openai.api.chat.ChatRole.User,
+                            content = msgBlock
+                        )
+                    )
+                    msgList.add(
+                        com.aallam.openai.api.chat.ChatMessage(
+                            role = com.aallam.openai.api.chat.ChatRole.Assistant,
+                            content = if (!typingInfo.currentTyping.isBlank()) "// Next line is a message starting with: '${typingInfo.currentTyping}'\n>>${typingInfo.currentTypingTrimmed}" else ">>"
+                        )
+                    )
+                }
+                msgBlock = ">>"
+            } else {
+                if (chatContents[i].sender != chatContents[i + 1].sender) {
+                    msgList.add(
+                        com.aallam.openai.api.chat.ChatMessage(
+                            role = chatContents[i].getRole(),
+                            content = msgBlock
+                        )
+                    )
+                    msgBlock = ">>"
+                }
+            }
+        }
+        return msgList
     }
 
     override fun toString(): String {
         var str = ""
-        for (i in chatContents){
+        for (i in chatContents) {
             str += i.toString() + "\n"
         }
         return str

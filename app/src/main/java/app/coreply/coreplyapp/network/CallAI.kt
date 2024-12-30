@@ -70,12 +70,14 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
     }
 
     fun updateSuggestion(typingInfo: TypingInfo, newSuggestion: String) {
-        _suggestionHistory[typingInfo.currentTyping] = newSuggestion
+        _suggestionHistory[typingInfo.currentTypingTrimmed] = newSuggestion
         listener?.onSuggestionUpdated(typingInfo, newSuggestion)
     }
 }
 
-data class TypingInfo(val pastMessages: ChatContents, val currentTyping: String)
+data class TypingInfo(val pastMessages: ChatContents, val currentTyping: String) {
+    val currentTypingTrimmed = currentTyping.substring(0, currentTyping.length - currentTyping.split(" ").last().length).trimEnd()
+}
 
 class CallAI(val suggestionStorage: SuggestionStorageClass) {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
@@ -87,7 +89,7 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
         // Launch a coroutine to collect debounced user input and fetch suggestions
         coroutineScope.launch {
             userInputFlow // adjust debounce delay as needed
-                .debounce(300).conflate()
+                .debounce(500).conflate()
                 .collectLatest { typingInfo ->
                     fetchSuggestions(typingInfo)
                 }
@@ -140,18 +142,13 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
                 ChatMessage(
                     role = ChatRole.System,
                     content = PreferenceHelper["customSystemPrompt","You are now texting others. Output the remaining part of the reply sentence only. Include a leading space if needed. Do not output anything else except the reply text."]
-                )
-            ) + typingInfo.pastMessages.getOpenAIFormat() + if (!typingInfo.currentTyping.isBlank()) listOf(
-                ChatMessage(
-                    role = ChatRole.Assistant,
-                    content = typingInfo.currentTyping
-                )
-            ) else listOf()
+                ))+typingInfo.pastMessages.getCoreplyFormat(typingInfo),
+
+            stop = listOf("\n", ">>","//",",",".","?","!"),
         )
         Log.v("OpenAI", request.messages.toString())
         val response = openAI.chatCompletion(request)
         Log.v("OpenAI", response.choices.first().message.content!!)
-        return response.choices.first().message.content ?: ""
-
+        return (if (typingInfo.currentTypingTrimmed.endsWith(" ")) (response.choices.first().message.content ?: "").trimEnd().trimEnd('>').trim() else (response.choices.first().message.content ?: "").trimEnd().trimEnd('>').trimEnd())
     }
 }

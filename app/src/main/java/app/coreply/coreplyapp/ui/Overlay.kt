@@ -45,7 +45,8 @@ import app.coreply.coreplyapp.utils.PixelCalculator
 
 data class SuggestionParts(val inline: String?, val trailing: String?)
 
-class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener, View.OnLongClickListener {
+class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener,
+    View.OnLongClickListener {
 
     private lateinit var pixelCalculator: PixelCalculator
     private lateinit var windowManager: WindowManager
@@ -61,6 +62,7 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
     private var DP48 = 0
     private var DP20 = 0
     private var node: AccessibilityNodeInfo? = null
+    private var isHintText: Boolean = false
 
     init {
         this.setTheme(R.style.AppTheme)
@@ -122,8 +124,9 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
         if (right != -1) chatEntry.right = right
     }
 
-    fun setNode(node: AccessibilityNodeInfo) {
+    fun setNode(node: AccessibilityNodeInfo, isHintText: Boolean) {
         this.node = node
+        this.isHintText = isHintText
     }
 
     fun update() {
@@ -135,7 +138,7 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
 
         trailingParams.y = chatEntry.bottom - STATUSBAR_HEIGHT
 
-        if(inlineTextView.text.isBlank()) {
+        if (inlineTextView.text.isBlank()) {
             removeInlineOverlay()
         } else {
             showInlineOverlay()
@@ -200,6 +203,7 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
             windowManager.addView(inlineView, mainParams)
         }
     }
+
     fun showTrailingOverlay() {
         if (!trailingView.isShown) {
             windowManager.addView(trailingView, trailingParams)
@@ -209,26 +213,25 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
 
     override fun onClick(v: View) {
         Log.v("CoWA", "onClick")
-        Log.v("CoWA", node!!.getText().toString())
         Log.v("CoWA", (v as TextView).getText().toString().trimEnd().split(" ")[0])
 
         if (v.getId() == R.id.suggestionBtn || v.id == R.id.trailingSuggestions) {
             val arguments = Bundle()
-            var addText:String = (v as TextView).getText().toString().trimEnd().split(" ")[0]
-            if (addText.isBlank()){
+            var addText: String = (v as TextView).getText().toString().trimEnd().split(" ")[0]
+            if (addText.isBlank()) {
                 addText = " " + (v as TextView).getText().toString().trimEnd().split(" ")[1]
             }
-            if (node!!.isShowingHintText() || node!!.text == "Message") {
+            if (node!!.isShowingHintText() || isHintText) {
                 arguments.putCharSequence(
                     AccessibilityNodeInfo
-                        .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,addText
+                        .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, addText
 
                 )
             } else {
                 arguments.putCharSequence(
                     AccessibilityNodeInfo
                         .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                    node!!.getText().toString()
+                    node!!.text.toString()
                         .replace("Compose Message", "") + addText
                 )
             }
@@ -239,7 +242,7 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
     override fun onLongClick(v: View): Boolean {
         if (v.getId() == R.id.suggestionBtn || v.id == R.id.trailingSuggestions) {
             val arguments = Bundle()
-            if (node!!.isShowingHintText() || node!!.text == "Message") {
+            if (node!!.isShowingHintText() || isHintText) {
                 arguments.putCharSequence(
                     AccessibilityNodeInfo
                         .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,

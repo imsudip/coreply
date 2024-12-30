@@ -20,7 +20,7 @@ class ChatMessage {
     }
 
     override fun toString(): String {
-        return "$sender: $message"
+        return "$sender:$message"
     }
 
     override fun equals(other: Any?): Boolean {
