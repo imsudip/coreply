@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import app.coreply.coreplyapp.utils.ChatContents
 import app.coreply.coreplyapp.utils.PreferenceHelper
 import app.coreply.coreplyapp.utils.SuggestionUpdateListener
+import com.aallam.openai.api.core.RequestOptions
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -147,7 +148,7 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
             stop = listOf("\n", ">>","//",",",".","?","!"),
         )
         Log.v("OpenAI", request.messages.toString())
-        val response = openAI.chatCompletion(request)
+        val response = openAI.chatCompletion(request, RequestOptions(headers = mapOf("HTTP-Referer" to "https://github.com/coreply/coreply", "X-Title" to "coreply: Android texting smart autocomplete")))
         Log.v("OpenAI", response.choices.first().message.content!!)
         return (if (typingInfo.currentTypingTrimmed.endsWith(" ")) (response.choices.first().message.content ?: "").trimEnd().trimEnd('>').trim() else (response.choices.first().message.content ?: "").trimEnd().trimEnd('>').trimEnd())
     }
