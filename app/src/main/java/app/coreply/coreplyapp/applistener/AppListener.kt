@@ -236,7 +236,7 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
             chatMessages.add(ChatMessage(if (isMe) "Me" else "Others", message_text, ""))
         }
 
-        Log.v("CoWA", conversationList.toString())
+        //Log.v("CoWA", conversationList.toString())
         return conversationList.combineChatContents(chatMessages)
     }
 
@@ -269,9 +269,9 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
 
     override fun onSuggestionUpdated(typingInfo: TypingInfo, newSuggestion: String) {
         Log.v("CoWA", "Suggestion updated")
-        Log.v("CoWA", typingInfo.currentTyping)
-        Log.v("CoWA", currentText!!)
-        Log.v("CoWA", newSuggestion)
+        //Log.v("CoWA", typingInfo.currentTyping)
+        //Log.v("CoWA", currentText!!)
+        //Log.v("CoWA", newSuggestion)
         if (overlay != null) {
             overlay!!.updateSuggestion(ai.suggestionStorage.getSuggestion(currentText!!))
         }

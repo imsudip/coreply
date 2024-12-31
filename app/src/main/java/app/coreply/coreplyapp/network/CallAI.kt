@@ -147,9 +147,9 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
 
             stop = listOf("\n", ">>","//",",",".","?","!"),
         )
-        Log.v("OpenAI", request.messages.toString())
+        //Log.v("OpenAI", request.messages.toString())
         val response = openAI.chatCompletion(request, RequestOptions(headers = mapOf("HTTP-Referer" to "https://github.com/coreply/coreply", "X-Title" to "coreply: Android texting smart autocomplete")))
-        Log.v("OpenAI", response.choices.first().message.content!!)
+        //Log.v("OpenAI", response.choices.first().message.content!!)
         return (if (typingInfo.currentTypingTrimmed.endsWith(" ")) (response.choices.first().message.content ?: "").trimEnd().trimEnd('>').trim() else (response.choices.first().message.content ?: "").trimEnd().trimEnd('>').trimEnd())
     }
 }
