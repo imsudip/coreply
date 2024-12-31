@@ -24,7 +24,8 @@ _DISCLAIMER: coreply is not affiliated with or endorsed by WhatsApp, Instagram, 
 ### Prerequisites
 
 -   Device running Android 13 or higher
--   API key for an OpenAI-compatible inference service
+-   API key for an OpenAI-compatible inference service, such as [Groq](https://console.groq.com/) and [Openrouter](https://openrouter.ai/)
+-   ⚠️Do note that OpenAI models are not supported due to the lack to output prefill controls. See [Model Selection & Providers](./docs/models.md) for more details.
 
 ### Installation & Usage
 
@@ -41,13 +42,13 @@ _DISCLAIMER: coreply is not affiliated with or endorsed by WhatsApp, Instagram, 
 3. Sync the Gradle files and resolve any dependencies.
 4. Build and run the app on your preferred device or emulator.
 
-## Suggestions on Model Selection
+## Model Selection
 
--   Small models having ~2B parameters struggle to understand what's going on. They are not able to provide good suggestions.
--   Medium models such as the 8B version of llama 3.1 and the 9B version of Gemma 2 are cost effective and provide good suggestions.
--   Larger models like the 70B version of llama 3.1 provides even better suggestions but are more expensive.
--   Gemma 2's non-English abilities seems slightly better the llama 3 family, but llama 3.1 has slightly better English abilities based on my testing.
--   GPT-4o and xAI's Grok provides really good suggestions but beware of the cost.
+See [Model Selection & Providers](./docs/models.md) for details.
+
+## How does it work?
+
+See [Model Selection & Providers](./docs/models.md) for details.
 
 ## Example setup with Groq
 
@@ -70,7 +71,7 @@ All contributions are welcome! However, the code was based on an old project in 
 ### Known Issues
 
 -   The app cannot read images, videos, voice notes, or other non-text content. Contextual suggestions may be limited in these cases.
--   Autofill suggestions in WhatsApp on a non-English locale may include extra words. This is a known issue and will be fixed in a future release.
+-   ~~Autofill suggestions in WhatsApp on a non-English locale may include extra words. This is a known issue and will be fixed in a future release.~~ Fixed in v1.0.
 -   Banking apps in asia commonly block apps from unknown sources having accessibility services permission due to security reasons. If you are facing this issue, you can setup [an accessibility shortcut](https://support.google.com/accessibility/android/answer/7650693?hl=en#step_1) to toggle the coreply on/off quickly. In the future there might be a Play Store listing to avoid this issue.
 
 ## License Notice
