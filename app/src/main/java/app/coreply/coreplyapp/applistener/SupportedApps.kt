@@ -17,19 +17,25 @@ object SupportedApps {
             arrayOf<String>("com.whatsapp.w4b/menuitem_delete"),
             arrayOf<String>("com.whatsapp.w4b:id/message_text", "com.whatsapp.w4b:id/caption"),
         ),
-// TODO: Support LINE
-//        SupportedAppProperty(
-//            "jp.naver.line.android",
-//            "jp.naver.line.android:id/chathistory_message_edit",
-//            arrayOf<String>(),
-//            arrayOf<String>(),
-//        ),
+        SupportedAppProperty(
+            "jp.naver.line.android",
+            "jp.naver.line.android:id/chat_ui_message_edit",
+            arrayOf<String>(),
+            arrayOf<String>("jp.naver.line.android:id/chat_ui_message_text"),
+        ),
 
         SupportedAppProperty(
             "com.instagram.android",
             "com.instagram.android:id/row_thread_composer_edittext",
             arrayOf<String>(),
             arrayOf<String>("com.instagram.android:id/direct_text_message_text_view"),
+        ),
+
+        SupportedAppProperty(
+            "org.thoughtcrime.securesms",
+            "org.thoughtcrime.securesms:id/embedded_text_editor",
+            arrayOf<String>(),
+            arrayOf<String>("org.thoughtcrime.securesms:id/conversation_item_body"),
         ),
 
         SupportedAppProperty(
@@ -43,6 +49,12 @@ object SupportedApps {
             "com.tinder:id/textMessageInput",
             arrayOf<String>(),
             arrayOf<String>("com.tinder:id/chatTextMessageContent"),
+        ),
+        SupportedAppProperty(
+            "com.vr.heymandi",
+            "com.vr.heymandi:id/messageInput",
+            arrayOf<String>(),
+            arrayOf<String>("com.vr.heymandi:id/messageText"),
         ),
 
         )

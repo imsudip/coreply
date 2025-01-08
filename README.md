@@ -16,8 +16,11 @@
 -   Instagram
 -   Tinder
 -   Hinge
+-   Line (Beta)
+-   Signal (Beta)
+-   Heymandi (Beta)
 
-_DISCLAIMER: coreply is not affiliated with or endorsed by WhatsApp, Instagram, Tinder, or Hinge._
+_DISCLAIMER: coreply is not affiliated with or endorsed by the above-mentioned apps or their parent companies._
 
 ## Getting Started
 
