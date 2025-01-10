@@ -16,7 +16,7 @@
         android:title="@string/pref_customization"
         app:iconSpaceReserved="false">
         <EditTextPreference
-            android:defaultValue="https://api.openai.com/v1/"
+            android:defaultValue="https://api.groq.com/openai/v1"
             android:key="customApiUrl"
             android:summary="@string/pref_description_api_url"
             android:title="@string/pref_api_url"
@@ -27,7 +27,7 @@
             android:title="@string/pref_api_key"
             app:iconSpaceReserved="false" />
         <EditTextPreference
-            android:defaultValue="gpt-4o"
+            android:defaultValue="llama-3.3-70b-versatile"
             android:key="customModelName"
             android:summary="Model name of the LLM."
             android:title="Model Name"
