@@ -21,8 +21,11 @@ package app.coreply.coreplyapp.ui
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.ContextThemeWrapper
@@ -32,12 +35,15 @@ import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.TextView
+import androidx.core.content.res.ResourcesCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import app.coreply.coreplyapp.R
+import app.coreply.coreplyapp.applistener.AppSupportStatus
 import app.coreply.coreplyapp.utils.PixelCalculator
+import kotlin.math.min
 
 /**
  * Created on 1/16/17.
@@ -62,7 +68,14 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
     private var DP48 = 0
     private var DP20 = 0
     private var node: AccessibilityNodeInfo? = null
-    private var isHintText: Boolean = false
+    private var status: AppSupportStatus = AppSupportStatus.UNSUPPORTED
+    private var bubbleBg: Drawable? = ResourcesCompat.getDrawable(
+        resources,
+        R.drawable.bubble_backgroud,
+        null
+    )
+    private var transparentBg: Drawable? = ColorDrawable(Color.TRANSPARENT)
+    private var running = false
 
     init {
         this.setTheme(R.style.AppTheme)
@@ -92,7 +105,7 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
         mainParams.format = PixelFormat.TRANSLUCENT
         mainParams.gravity = Gravity.TOP or Gravity.START
         mainParams.height = DP48
-        mainParams.alpha = 0.8f
+        mainParams.alpha = 0.9f
 
         trailingParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         trailingParams.flags =
@@ -105,6 +118,9 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
 
         inlineTextView = inlineView.findViewById<TextView>(R.id.suggestionBtn)
         trailingTextView = trailingView.findViewById<TextView>(R.id.trailingSuggestions)
+
+        inlineTextView.text = ""
+        trailingTextView.text = ""
 
         inlineTextView.setOnClickListener(this)
         trailingTextView.setOnClickListener(this)
@@ -124,45 +140,68 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
         if (right != -1) chatEntry.right = right
     }
 
-    fun setNode(node: AccessibilityNodeInfo, isHintText: Boolean) {
+    fun setNode(node: AccessibilityNodeInfo, status: AppSupportStatus) {
         this.node = node
-        this.isHintText = isHintText
+        this.status = status
     }
 
     fun update() {
-        mainParams.x = chatEntry.left
-        mainParams.y = chatEntry.top - STATUSBAR_HEIGHT
-        mainParams.height =
-            chatEntry.bottom - chatEntry.top
-        mainParams.width = chatEntry.right - chatEntry.left
+        if (running) {
+            mainParams.y = chatEntry.top - STATUSBAR_HEIGHT
+            mainParams.height =
+                chatEntry.bottom - chatEntry.top
 
-        trailingParams.y = chatEntry.bottom - STATUSBAR_HEIGHT
+            if (status == AppSupportStatus.HINT_TEXT) {
+                mainParams.width =
+                    min(
+                        ((inlineTextView.paint.measureText(inlineTextView.text.toString()))).toInt() + DP8 * 2,
+                        chatEntry.right - chatEntry.left + DP8 * 2
+                    )
+                inlineTextView.background = bubbleBg
+                inlineTextView.setPadding(DP8, 0, DP8, 0)
+                mainParams.x = chatEntry.right - mainParams.width
+            } else {
+                mainParams.width =
+                    min(
+                        (inlineTextView.paint.measureText(inlineTextView.text.toString())).toInt(),
+                        chatEntry.right - chatEntry.left
+                    )
+                inlineTextView.background = transparentBg
+                inlineTextView.setPadding(0, 0, 0, 0)
+                mainParams.x = chatEntry.left
+            }
 
-        if (inlineTextView.text.isBlank()) {
-            removeInlineOverlay()
-        } else {
-            showInlineOverlay()
+
+            trailingParams.y = chatEntry.bottom - STATUSBAR_HEIGHT
+
+            if (inlineTextView.text.isBlank()) {
+                removeInlineOverlay()
+            } else {
+                showInlineOverlay()
+            }
+
+            if (trailingTextView.text.isBlank()) {
+                removeTrailingOverlay()
+            } else {
+                trailingParams.width =
+                    (trailingTextView.paint.measureText(trailingTextView.text.toString()) * 1.1).toInt() + DP20
+                showTrailingOverlay()
+            }
+
+            if (inlineView.isShown) windowManager.updateViewLayout(inlineView, mainParams)
+            if (trailingView.isShown) windowManager.updateViewLayout(trailingView, trailingParams)
         }
-
-        if (trailingTextView.text.isBlank()) {
-            removeTrailingOverlay()
-        } else {
-            trailingParams.width =
-                (trailingTextView.paint.measureText(trailingTextView.text.toString()) * 1.1).toInt() + DP20
-            showTrailingOverlay()
-        }
-
-
-        if (inlineView.isShown()) windowManager.updateViewLayout(inlineView, mainParams)
-        if (trailingView.isShown()) windowManager.updateViewLayout(trailingView, trailingParams)
     }
 
     fun updateSuggestion(suggestion: String?) {
         var suggestion = suggestion ?: ""
-
+        Log.v("Suggestion", suggestion)
         MainScope().launch {
             withContext(Dispatchers.Main) {
-                if (inlineTextView.paint.measureText(suggestion) > mainParams.width) {
+                if (status == AppSupportStatus.API_BELOW_33) {
+                    inlineTextView.text = ""
+                    trailingTextView.text = suggestion.toString().toString()
+                } else if (inlineTextView.paint.measureText(suggestion) > (chatEntry.right - chatEntry.left)) {
                     inlineTextView.text = suggestion.toString().trimEnd()
                     trailingTextView.text = suggestion.toString().trimEnd()
                 } else {
@@ -170,14 +209,23 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
                     trailingTextView.text = ""
                 }
                 update()
+
+
             }
         }
 
     }
 
-    fun removeViews() {
+    fun disable() {
+        running = false
+        trailingTextView.text = ""
+        inlineTextView.text = ""
         removeInlineOverlay()
         removeTrailingOverlay()
+    }
+
+    fun enable() {
+        running = true
     }
 
     fun removeInlineOverlay() {
@@ -212,16 +260,13 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
 
 
     override fun onClick(v: View) {
-        Log.v("CoWA", "onClick")
-        Log.v("CoWA", (v as TextView).getText().toString().trimEnd().split(" ")[0])
-
         if (v.getId() == R.id.suggestionBtn || v.id == R.id.trailingSuggestions) {
             val arguments = Bundle()
-            var addText: String = (v as TextView).getText().toString().trimEnd().split(" ")[0]
+            var addText: String = (v as TextView).text.toString().trimEnd().split(" ")[0]
             if (addText.isBlank()) {
-                addText = " " + (v as TextView).getText().toString().trimEnd().split(" ")[1]
+                addText = " " + v.text.toString().trimEnd().split(" ")[1]
             }
-            if (node!!.isShowingHintText() || isHintText) {
+            if (node!!.isShowingHintText || status == AppSupportStatus.HINT_TEXT) {
                 arguments.putCharSequence(
                     AccessibilityNodeInfo
                         .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, addText
@@ -242,18 +287,18 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
     override fun onLongClick(v: View): Boolean {
         if (v.getId() == R.id.suggestionBtn || v.id == R.id.trailingSuggestions) {
             val arguments = Bundle()
-            if (node!!.isShowingHintText() || isHintText) {
+            if (node!!.isShowingHintText || status == AppSupportStatus.HINT_TEXT) {
                 arguments.putCharSequence(
                     AccessibilityNodeInfo
                         .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                    (v as TextView).getText().toString().trimEnd()
+                    (v as TextView).text.toString().trimEnd()
                 )
             } else {
                 arguments.putCharSequence(
                     AccessibilityNodeInfo
                         .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                    node!!.getText().toString()
-                        .replace("Compose Message", "") + (v as TextView).getText().toString()
+                    node!!.text.toString()
+                        .replace("Compose Message", "") + (v as TextView).text.toString()
                         .trimEnd()
                 )
             }

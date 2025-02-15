@@ -21,7 +21,6 @@ package app.coreply.coreplyapp.applistener
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.content.Intent
 import android.graphics.Rect
 import android.graphics.RectF
 import android.os.Bundle
@@ -76,13 +75,14 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
 
 
     override fun onInterrupt() {
-        overlay!!.removeViews()
+        overlay!!.disable()
     }
 
-    private fun measureWindow(node: AccessibilityNodeInfo): Boolean {
+    private fun measureWindow(node: AccessibilityNodeInfo): AppSupportStatus {
         val rect = Rect()
-        var isHintText = false
+        var status: AppSupportStatus = AppSupportStatus.SUPPORTED_UNKOWN
         node.getBoundsInScreen(rect)
+
         // Use EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY to get the cursor position
         val arguments = Bundle()
         arguments.putInt(
@@ -91,50 +91,49 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
         )
         arguments.putInt(
             AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH,
-            node.getText().length
+            node.text.length
         )
         if (node.refreshWithExtraData(
                 AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY,
                 arguments
             )
         ) {
-            val rectArray: Array<RectF?>? = node.extras.getParcelableArray<RectF?>(
-                AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY,
-                RectF::class.java
-            )
-            // For loop in reverse order to get the last cursor position
-            if (rectArray != null) {
-                for (i in rectArray.indices.reversed()) {
-                    val rectF = rectArray[i]
-                    if (rectF != null) {
-                        rect.left = rectF.right.toInt()
-                        rect.top = rectF.top.toInt()
-                        rect.bottom = rectF.bottom.toInt()
-
-                        break
-                    } else {
-                        Log.v("CoWA", "Rect is null")
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                val rectArray: Array<RectF?>? = node.extras.getParcelableArray(
+                    AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY,
+                    RectF::class.java
+                )
+                // For loop in reverse order to get the last cursor position
+                if (rectArray != null && rectArray.any { it != null }) {
+                    status = AppSupportStatus.TYPING
+                    for (i in rectArray.indices.reversed()) {
+                        val rectF = rectArray[i]
+                        if (rectF != null) {
+                            rect.left = rectF.right.toInt()
+                            rect.top = rectF.top.toInt()
+                            rect.bottom = rectF.bottom.toInt()
+                            break
+                        } // Otherise, is a fake text, probably hint text
                     }
+                } else {
+                    rect.left += (rect.width()*0.5).toInt()
+                    status = AppSupportStatus.HINT_TEXT
                 }
             } else {
-                isHintText = true
-                Log.v("CoWA", "Rect array is null")
+                status = AppSupportStatus.API_BELOW_33
             }
+
         } else {
             Log.v("CoWA", "Failed to refresh cursor position")
         }
-        if (node.isShowingHintText() || isHintText) {
-            rect.left = rect.left + 200
-        }
-        Log.v("CoWA", "Text Node: " + node.getText())
         overlay!!.setRect(rect)
         overlay!!.update()
-        return isHintText
+        return status
     }
 
-    private fun onEditTextUpdate(node: AccessibilityNodeInfo, isHintText: Boolean) {
-        var actualMessage = node.getText().toString().replace("Compose Message", "")
-        if (isHintText || node.isShowingHintText()) {
+    private fun onEditTextUpdate(node: AccessibilityNodeInfo, status: AppSupportStatus) {
+        var actualMessage = node.text.toString().replace("Compose Message", "")
+        if (status == AppSupportStatus.HINT_TEXT || node.isShowingHintText) {
             actualMessage = ""
         }
         currentText = actualMessage
@@ -144,7 +143,7 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
             overlay!!.updateSuggestion("")
             ai.onUserInputChanged(TypingInfo(conversationList, actualMessage))
         }
-        overlay!!.setNode(node,isHintText)
+        overlay!!.setNode(node,status)
     }
 
     private fun refreshOverlay(event: AccessibilityEvent, root: AccessibilityNodeInfo): Boolean {
@@ -157,10 +156,11 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
                 currentApp = supportedAppProperty
                 currentExcludeList = supportedAppProperty.excludeWidgets
                 running = true
+                overlay!!.enable()
 
                 val triggerWidget = triggerWidgetList.get(0)
 
-                val isHintText = measureWindow(triggerWidget)
+                val status = measureWindow(triggerWidget)
                 var actualMessage =
                     triggerWidget.getText().toString().replace("Compose Message", "")
                 if (actualMessage == "Message") {
@@ -170,11 +170,11 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
                     if (getMessages(root)) {
                         ai.suggestionStorage.clearSuggestion()
                     }
-                    onEditTextUpdate(triggerWidget, isHintText)
+                    onEditTextUpdate(triggerWidget, status)
                 } else if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && event.getPackageName() == currentApp!!.pkgName) {
                     val refreshMessageList = getMessages(root)
                     if (refreshMessageList || actualMessage != currentText) {
-                        onEditTextUpdate(triggerWidget, isHintText)
+                        onEditTextUpdate(triggerWidget, status)
                     }
                     if (refreshMessageList) {
                         ai.suggestionStorage.clearSuggestion()
@@ -185,9 +185,10 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
         }
         if (!isSupportedApp) {
             if (running) {
+                overlay!!.disable()
                 autoDetect = false
-                overlay!!.removeViews()
                 running = false
+                ai.suggestionStorage.clearSuggestion()
                 currentText = null
             }
         }
@@ -209,23 +210,6 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
             rect1.top - rect2.top
         })
 
-//        var left = -1
-//        var right = -1
-//        for (chatNodeInfo in chatWidgets) {
-//            val bounds = Rect()
-//            chatNodeInfo.getBoundsInScreen(bounds)
-//            if (left == -1) {
-//                left = bounds.left
-//                right = bounds.right
-//            } else {
-//                if (bounds.left < left) {
-//                    left = bounds.left
-//                }
-//                if (bounds.right > right) {
-//                    right = bounds.right
-//                }
-//            }
-//        }
         val rootRect = Rect()
         rootInActiveWindow.getBoundsInScreen(rootRect)
         for (chatNodeInfo in chatWidgets) {
@@ -255,23 +239,23 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
 
         if (overlay == null) {
             overlay = Overlay(appContext)
-            overlay!!.removeViews()
+            overlay!!.disable()
         } else {
-            overlay!!.removeViews()
+            overlay!!.disable()
         }
         pixelCalculator = PixelCalculator(appContext)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (overlay != null) overlay!!.removeViews()
+        if (overlay != null) overlay!!.disable()
     }
 
     override fun onSuggestionUpdated(typingInfo: TypingInfo, newSuggestion: String) {
         Log.v("CoWA", "Suggestion updated")
-        //Log.v("CoWA", typingInfo.currentTyping)
-        //Log.v("CoWA", currentText!!)
-        //Log.v("CoWA", newSuggestion)
+//        Log.v("CoWA", typingInfo.currentTyping)
+//        Log.v("CoWA", currentText!!)
+//        Log.v("CoWA", newSuggestion)
         if (overlay != null && running) {
             overlay!!.updateSuggestion(ai.suggestionStorage.getSuggestion(currentText!!))
         }
