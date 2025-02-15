@@ -272,7 +272,7 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
         //Log.v("CoWA", typingInfo.currentTyping)
         //Log.v("CoWA", currentText!!)
         //Log.v("CoWA", newSuggestion)
-        if (overlay != null) {
+        if (overlay != null && running) {
             overlay!!.updateSuggestion(ai.suggestionStorage.getSuggestion(currentText!!))
         }
     }
