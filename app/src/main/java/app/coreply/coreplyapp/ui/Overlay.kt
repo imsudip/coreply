@@ -195,7 +195,6 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
 
     fun updateSuggestion(suggestion: String?) {
         var suggestion = suggestion ?: ""
-        Log.v("Suggestion", suggestion)
         MainScope().launch {
             withContext(Dispatchers.Main) {
                 if (status == AppSupportStatus.API_BELOW_33) {
