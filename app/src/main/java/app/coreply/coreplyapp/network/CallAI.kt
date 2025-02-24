@@ -90,7 +90,7 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
         // Launch a coroutine to collect debounced user input and fetch suggestions
         coroutineScope.launch {
             userInputFlow // adjust debounce delay as needed
-                .debounce(500).conflate()
+                .debounce(200).conflate()
                 .collectLatest { typingInfo ->
                     fetchSuggestions(typingInfo)
                 }
