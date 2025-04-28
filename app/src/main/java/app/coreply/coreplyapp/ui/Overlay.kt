@@ -26,6 +26,7 @@ import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.icu.text.BreakIterator
 import android.os.Bundle
 import android.util.Log
 import android.view.ContextThemeWrapper
@@ -43,6 +44,8 @@ import kotlinx.coroutines.withContext
 import app.coreply.coreplyapp.R
 import app.coreply.coreplyapp.applistener.AppSupportStatus
 import app.coreply.coreplyapp.utils.PixelCalculator
+import java.util.Locale
+import java.util.StringTokenizer
 import kotlin.math.min
 
 /**
@@ -257,13 +260,31 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
         }
     }
 
+    fun tokenizeText(input: String): List<String> {
+        val breakIterator = BreakIterator.getWordInstance(Locale.ROOT)
+        breakIterator.setText(input)
+        val tokens = mutableListOf<String>()
+        var start = breakIterator.first()
+        var end = breakIterator.next()
+        while (end != BreakIterator.DONE) {
+            val word = input.substring(start, end)
+            if (word.isNotEmpty()) {
+                tokens.add(word)
+            }
+            start = end
+            end = breakIterator.next()
+        }
+        return tokens
+    }
+
 
     override fun onClick(v: View) {
         if (v.getId() == R.id.suggestionBtn || v.id == R.id.trailingSuggestions) {
             val arguments = Bundle()
-            var addText: String = (v as TextView).text.toString().trimEnd().split(" ")[0]
-            if (addText.isBlank()) {
-                addText = " " + v.text.toString().trimEnd().split(" ")[1]
+            val tokenizedString = tokenizeText((v as TextView).text.toString().trimEnd())
+            var addText: String = if(tokenizedString.isNotEmpty()) tokenizedString[0] else ""
+            if (addText.isBlank() && tokenizedString.size > 1) {
+                addText += tokenizedString[1]
             }
             if (node!!.isShowingHintText || status == AppSupportStatus.HINT_TEXT) {
                 arguments.putCharSequence(
