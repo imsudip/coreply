@@ -38,11 +38,38 @@ import app.coreply.coreplyapp.utils.ChatContents
 import app.coreply.coreplyapp.utils.PreferenceHelper
 import app.coreply.coreplyapp.utils.SuggestionUpdateListener
 import com.aallam.openai.api.core.RequestOptions
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.sample
 import java.util.concurrent.ConcurrentHashMap
 
 
 class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = null) {
     private val _suggestionHistory = ConcurrentHashMap<String, String>()
+    private val PUNCTUATIONS = listOf(
+        "!", "\"", ")", ",", ".", ":",
+        ";", "?", "]", "~", "，","。", "：", "；", "？", "）","】", "！", "、", "」",
+    )
+    private val PUNCTUATIONS_REGEX = "(?=[!\")\\],.:;?~，。：；？）】！、」])".toRegex()
+
+    fun splitAndKeepPunctuations(text: String): List<String> {
+        return text.split(PUNCTUATIONS_REGEX).filter { it.isNotEmpty() }
+    }
+
+
+    // Remove all punctuations from the text, remove whitespaces, and lower all characters
+    fun getKeyFromText(text: String): String {
+        var key = text.trim()
+        for (punctuation in PUNCTUATIONS) {
+            key = key.replace(punctuation, "")
+        }
+        key = key.replace(" ", "")
+        key = key.lowercase()
+        if (!text.isBlank() && PUNCTUATIONS.contains(text.last().toString())) {
+            key += "-"
+
+        }
+        return key
+    }
     fun getSuggestion(toBeCompleted: String): String? {
         if (toBeCompleted.isBlank()) {
             if (_suggestionHistory.containsKey("")) {
@@ -50,11 +77,12 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
             }
         }
         for (i in 0..toBeCompleted.length) {
-            val target: String = toBeCompleted.substring(0, i)
+            val target: String = getKeyFromText(toBeCompleted.substring(0, i))
             if (_suggestionHistory.containsKey(target)) {
                 val starting = toBeCompleted.substring(i)
                 val suggestion = _suggestionHistory[target]!!
-                if (starting.isEmpty() || suggestion.startsWith(starting)) {
+                if (starting.isEmpty() || (suggestion.startsWith(starting) &&
+                            suggestion.length > starting.length)) {
                     return suggestion.substring(starting.length)
                 }
             }
@@ -71,17 +99,30 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
     }
 
     fun updateSuggestion(typingInfo: TypingInfo, newSuggestion: String) {
-        _suggestionHistory[typingInfo.currentTypingTrimmed] = newSuggestion
-        listener?.onSuggestionUpdated(typingInfo, newSuggestion)
+        if(newSuggestion.lowercase().startsWith(typingInfo.currentTyping.lowercase())) {
+            val frontTrimmedSuggestion = newSuggestion.substring(typingInfo.currentTyping.length)
+            val splittedText = splitAndKeepPunctuations(frontTrimmedSuggestion)
+//            Log.v("CallAI", "Splitted text: $splittedText")
+            for (i in 0..splittedText.size - 2) {
+//                Log.v("CallAI", getKeyFromText(typingInfo.currentTyping + splittedText.subList(0, i + 1).joinToString("")))
+                _suggestionHistory[getKeyFromText(typingInfo.currentTyping + splittedText.subList(0, i + 1).joinToString(""))] =
+                    splittedText[i + 1]
+            }
+            _suggestionHistory[getKeyFromText(typingInfo.currentTyping)] = if( splittedText.isNotEmpty()) splittedText[0] else ""
+            listener?.onSuggestionUpdated(typingInfo, frontTrimmedSuggestion) // huh actually the arguments are unused
+        }
     }
 }
 
 data class TypingInfo(val pastMessages: ChatContents, val currentTyping: String) {
-    val currentTypingTrimmed = currentTyping.substring(0, currentTyping.length - currentTyping.split(" ").last().length).trimEnd()
+    val currentTypingTrimmed =
+        currentTyping.substring(0, currentTyping.length - currentTyping.split(" ").last().length)
+            .trimEnd()
 }
 
-class CallAI(val suggestionStorage: SuggestionStorageClass) {
+open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // Flow to handle debouncing of user input
     private val userInputFlow = MutableSharedFlow<TypingInfo>(replay = 1)
@@ -90,9 +131,11 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
         // Launch a coroutine to collect debounced user input and fetch suggestions
         coroutineScope.launch {
             userInputFlow // adjust debounce delay as needed
-                .debounce(200).conflate()
-                .collectLatest { typingInfo ->
-                    fetchSuggestions(typingInfo)
+                .debounce(200)
+                .collect { typingInfo ->
+                    networkScope.launch{
+                        fetchSuggestions(typingInfo)
+                    }
                 }
         }
     }
@@ -119,7 +162,7 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
         }
     }
 
-    private suspend fun requestSuggestionsFromServer(
+    open suspend fun requestSuggestionsFromServer(
         typingInfo: TypingInfo
     ): String {
         var baseUrl = PreferenceHelper["customApiUrl", "https://api.groq.com/openai/v1"]
@@ -135,6 +178,12 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
         )
 
         val openAI = OpenAI(config)
+        var userPrompt = "Given this chat history\n" +
+                typingInfo.pastMessages.getCoreply2Format() + "\nIn addition to the message I sent,\n" +
+                "What else should I send? Or start a new topic?"
+        if (typingInfo.currentTyping.isNotBlank()) {
+            userPrompt += "The reply should start with '${typingInfo.currentTyping}'\n"
+        }
         val request = ChatCompletionRequest(
             temperature = PreferenceHelper["temperature", 3] / 10.0,
             model = ModelId(PreferenceHelper["customModelName", "llama-3.3-70b-versatile"]),
@@ -142,14 +191,26 @@ class CallAI(val suggestionStorage: SuggestionStorageClass) {
             messages = listOf(
                 ChatMessage(
                     role = ChatRole.System,
-                    content = PreferenceHelper["customSystemPrompt","You are now texting a user. The symbol '>>' Indicates the start of a message, or the end of the message turn.\n'//' indicates a comment line, which describes the message in the next line.\n\nFor example:\n>>Hello\n// Next line is a message starting with 'Fre':\n>>Free now?\n>>\n\nYour output should always adhere to the given format, and match the tone and style of the text."]
-                ))+typingInfo.pastMessages.getCoreplyFormat(typingInfo),
+                    content = PreferenceHelper["customSystemPrompt", "You are an AI texting assistant. You will be given a list of text messages between the user (indicated by 'Message I sent:'), and other people (indicated by their names or simply 'Message I received:'). You may also receive a screenshot of the conversation. Your job is to suggest the next message the user should send. Match the tone and style of the conversation. The user may request the message start or end with a certain prefix (both could be parts of a longer word) . The user may quote a specific message. In this case, make sure your suggestions are about the quoted message.\n" +
+                            "Output the suggested text only. Do not output anything else. Do not surround output with quotation marks"]
+                ),
+                ChatMessage(
+                    role = ChatRole.User,
+                    content = userPrompt
+                ),
 
-            stop = listOf("\n", ">>","//",","),
+
+                ),
         )
-        //Log.v("OpenAI", request.messages.toString())
-        val response = openAI.chatCompletion(request, RequestOptions(headers = mapOf("HTTP-Referer" to "https://github.com/coreply/coreply", "X-Title" to "coreply: Android texting smart autocomplete")))
-        //Log.v("OpenAI", response.choices.first().message.content!!)
-        return (if (typingInfo.currentTypingTrimmed.endsWith(" ")) (response.choices.first().message.content ?: "").trimEnd().trimEnd('>').trim() else (response.choices.first().message.content ?: "").trimEnd().trimEnd('>').trimEnd())
+        val response = openAI.chatCompletion(
+            request,
+            RequestOptions(
+                headers = mapOf(
+                    "HTTP-Referer" to "https://coreply.app",
+                    "X-Title" to "Coreply: Autocomplete for Texting"
+                )
+            )
+        )
+        return response.choices.first().message.content?.trim() ?: ""
     }
 }
