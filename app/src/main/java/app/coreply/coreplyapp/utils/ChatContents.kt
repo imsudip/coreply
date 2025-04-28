@@ -3,6 +3,7 @@ package app.coreply.coreplyapp.utils
 import android.util.Log
 import app.coreply.coreplyapp.network.TypingInfo
 
+
 class ChatContents {
     // Contains a list of ChatMessage objects
     var chatContents: MutableList<ChatMessage> = mutableListOf()
@@ -17,7 +18,7 @@ class ChatContents {
     fun combineChatContents(other: MutableList<ChatMessage>): Boolean {
         if (chatContents.size < 1 || other.size < 1) {
             chatContents = other
-            return true
+            return false
         } else {
             // Append new messages to the chatContents list
             if (other[0] in chatContents) {
@@ -101,6 +102,14 @@ class ChatContents {
             }
         }
         return msgList
+    }
+
+    fun getCoreply2Format(): String{
+        var msgBlock: String = ""
+        for (msg in chatContents.takeLast(20)) {
+            msgBlock += msg.toCoreply2String()
+        }
+        return msgBlock
     }
 
     override fun toString(): String {
