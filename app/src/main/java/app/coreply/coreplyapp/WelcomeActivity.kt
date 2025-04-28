@@ -20,8 +20,6 @@ class WelcomeActivity : AppCompatActivity() {
             2 -> grantAccessibility()
             3 -> disableAccessibility()
             else -> {
-                Toast.makeText(this, R.string.tutorial_permission_done, Toast.LENGTH_LONG)
-                    .show() //TODO: strings.xml
                 finish()
             }
         }

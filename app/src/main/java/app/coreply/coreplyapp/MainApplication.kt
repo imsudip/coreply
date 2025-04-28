@@ -26,7 +26,7 @@ import app.coreply.coreplyapp.utils.PreferenceHelper
 /**
  * Created on 1/25/17.
  */
-class MainApplication : Application() {
+open class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         PreferenceHelper.init(this)

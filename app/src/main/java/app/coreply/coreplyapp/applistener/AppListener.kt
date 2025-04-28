@@ -43,7 +43,7 @@ import java.util.Comparator
 /**
  * Created on 10/13/16.
  */
-class AppListener : AccessibilityService(), SuggestionUpdateListener {
+open class AppListener : AccessibilityService(), SuggestionUpdateListener {
     private var overlay: Overlay? = null
     private var pixelCalculator: PixelCalculator? = null
     private var currentApp: SupportedAppProperty? = null
@@ -51,7 +51,7 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
     private var running = false
     private var currentText: String? = null
     private val conversationList = ChatContents()
-    private val ai = CallAI(SuggestionStorageClass(this))
+    open val ai = CallAI(SuggestionStorageClass(this))
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         Log.v("CoWA", "event triggered")
@@ -216,7 +216,7 @@ class AppListener : AccessibilityService(), SuggestionUpdateListener {
             val bounds = Rect()
             chatNodeInfo.getBoundsInScreen(bounds)
             val isMe = (bounds.left+bounds.right)/2 > (rootRect.left+rootRect.right)/2
-            val message_text = chatNodeInfo.getText().toString()
+            val message_text = chatNodeInfo.text?.toString() ?: ""
             chatMessages.add(ChatMessage(if (isMe) "Me" else "Others", message_text, ""))
         }
 
