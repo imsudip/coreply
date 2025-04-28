@@ -2,6 +2,7 @@ package app.coreply.coreplyapp.utils
 
 import com.aallam.openai.api.chat.ChatRole
 
+
 class ChatMessage {
     // Contains properties: sender, message, timestr and override the toString method
     var sender: String = ""
@@ -21,6 +22,17 @@ class ChatMessage {
 
     override fun toString(): String {
         return "$sender:$message"
+    }
+
+    fun toCoreply2String(): String {
+        var str = ""
+        if (sender == "Me") {
+            str += "Message I sent:\n"
+        } else {
+            str += "Message I received:\n"
+        }
+        str += message + "\n"
+        return str
     }
 
     override fun equals(other: Any?): Boolean {
