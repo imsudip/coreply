@@ -12,7 +12,6 @@ The new prompt format is now more flexible and can be used with mainstream LLMs.
 
 Many other models should work as well. You can try them out and find the best fit for your needs.
 
-** Content below is deprecated. You may find the relevant code in the source code and you can try it yourself if interested. **
 
 ## System Message
 
@@ -49,6 +48,9 @@ What color options do you have?
 ## Parsing
 
 Coreply would remove text the user has already typed. For example, if the user is typing `What col`, Coreply would show the suggestion as `or options do you have?` on the screen. This is because most LLMs are terrible at outputting partial words, giving lots of nonsense and typos. So we need to let it output the full word.
+
+
+Content below is deprecated. You may find the relevant code in the source code and you can try it yourself if interested.
 
 # ~~Model Selection & Providers v1~~ (deprecated)
 
