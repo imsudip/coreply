@@ -13,7 +13,7 @@ import app.coreply.coreplyapp.utils.GlobalPref
 /**
  * Created on 12/24/16.
  */
-class SettingsFragment : PreferenceFragmentCompat() {
+open class SettingsFragment : PreferenceFragmentCompat() {
     private var master: SwitchPreferenceCompat? = null
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_main)
