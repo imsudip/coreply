@@ -56,7 +56,7 @@ Coreply would remove text the user has already typed. For example, if the user i
 
 # ~~Model Selection & Providers v1~~ (deprecated)
 
-~~In short, coreply has been briefly tested with the following models:
+In short, coreply has been briefly tested with the following models:
 
 | Model                   | Supported?              |
 | ----------------------- | ----------------------- |
@@ -133,4 +133,4 @@ The model's output could be something like `about next week`. Note that Bob has 
 
 All models above could be found on [Openrouter](https://openrouter.ai/). Fast inference on open source models could be found on [Groq](https://console.groq.com/).
 
-To Google and OpenAI: Please add prefill controls to your API. It would be a very useful feature.~~
+To Google and OpenAI: Please add prefill controls to your API. It would be a very useful feature.
