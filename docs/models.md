@@ -47,7 +47,7 @@ What color options do you have?
 
 ## Parsing
 
-Coreply would remove text the user has already typed. For example, if the user is typing `What col`, Coreply would show the suggestion as `or options do you have?` on the screen. This is because most LLMs are terrible at outputting partial words, giving lots of nonsense and typos. So we need to let it output the full word.
+Coreply would remove text the user has already typed from the output. For example, if the user is typing `What col`, Coreply would show the suggestion as `or options do you have?` on the screen. This is because most LLMs are terrible at outputting partial words, giving lots of nonsense and typos. So we need to let it output the full word.
 
 
 ----
