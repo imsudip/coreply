@@ -1,4 +1,56 @@
-# Model Selection & Providers
+# Model Selection & Prompting v2
+
+The new prompt format is now more flexible and can be used with mainstream LLMs. It has been briefly tested with the following models:
+
+| Model                   | Supported? |
+|-------------------------|------------|
+| Claude 3 and 3.5 Family | ✅          |
+| Llama 3 & 4 Family      | ✅          |
+| Gemma 2 & 3 Family      | ✅          |
+| OpenAI GPT Family       | ✅          |
+| Google Gemini Family    | ✅          |
+
+Many other models should work as well. You can try them out and find the best fit for your needs.
+
+** Content below is deprecated. You may find the relevant code in the source code and you can try it yourself if interested. **
+
+## System Message
+
+This is an example of a system message that can be used. For the exact prompt, you can check out the latest version of the code as they may change over time.
+
+```
+You are an AI texting assistant. You will be given a list of text messages between the user (indicated by 'Message I sent:'), and other people (indicated by their names or simply 'Message I received:'). You may also receive a screenshot of the conversation. Your job is to suggest the next message the user should send. Match the tone and style of the conversation. The user may request the message start or end with a certain prefix (both could be parts of a longer word) . The user may quote a specific message. In this case, make sure your suggestions are about the quoted message.
+Output the suggested text only. Do not output anything else. Do not surround output with quotation marks
+```
+
+## User Message
+
+This is an example of a user message that can be used. For the exact prompt, you can check out the latest version of the code as they may change over time. The last line specifies the message the user is currently typing.
+
+```
+Given this chat history
+Message I sent: Hello, I would like to know more about this product.
+Message I received: Hi, what product are you interested in?
+Message I sent: I am looking at the new wireless charger.
+
+In addition to the message I sent,
+What else should I send?
+The message should start with 'What col'.
+```
+
+## Assistant Response
+
+The LLM would probably respond with something like:
+
+```
+What color options do you have?
+```
+
+## Parsing
+
+Coreply would remove text the user has already typed. For example, if the user is typing `What col`, Coreply would show the suggestion as `or options do you have?` on the screen. This is because most LLMs are terrible at outputting partial words, giving lots of nonsense and typos. So we need to let it output the full word.
+
+# ~~Model Selection & Providers v1~~ (deprecated)
 
 In short, coreply has been briefly tested with the following models:
 
@@ -12,7 +64,7 @@ In short, coreply has been briefly tested with the following models:
 
 \* Inference provider needs to support assistant message prefilling, which most providers do.
 
-## The coreply prompt format
+## The coreply prompt format 
 
 Consider the example conversation:
 
