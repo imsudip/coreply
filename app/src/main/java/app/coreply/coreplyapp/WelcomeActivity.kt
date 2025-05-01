@@ -46,14 +46,14 @@ class WelcomeActivity : AppCompatActivity() {
 
     // TODO: Implement openVideoTutorial
     fun openVideoTutorial(v: View?) {
-        val id = ""
-        val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$id"))
-        try {
-            startActivity(appIntent)
-        } catch (e: ActivityNotFoundException) {
-            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://youtu.be/$id"))
-            startActivity(webIntent)
-        }
+//        val id = ""
+//        val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$id"))
+//        try {
+//            startActivity(appIntent)
+//        } catch (e: ActivityNotFoundException) {
+//            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://youtu.be/$id"))
+//            startActivity(webIntent)
+//        }
     }
 
     fun openAccessibilitySettings(v: View?) {

@@ -70,6 +70,9 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
         }
         return key
     }
+    fun String.lowerAndReplaceWhiteSpaces(): String {
+        return this.replace("\\s+".toRegex(), " ").lowercase()
+    }
     fun getSuggestion(toBeCompleted: String): String? {
         if (toBeCompleted.isBlank()) {
             if (_suggestionHistory.containsKey("")) {
@@ -99,7 +102,7 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
     }
 
     fun updateSuggestion(typingInfo: TypingInfo, newSuggestion: String) {
-        if(newSuggestion.lowercase().startsWith(typingInfo.currentTyping.lowercase())) {
+        if(newSuggestion.lowerAndReplaceWhiteSpaces().startsWith(typingInfo.currentTyping.lowerAndReplaceWhiteSpaces())) {
             val frontTrimmedSuggestion = newSuggestion.substring(typingInfo.currentTyping.length)
             val splittedText = splitAndKeepPunctuations(frontTrimmedSuggestion)
 //            Log.v("CallAI", "Splitted text: $splittedText")
