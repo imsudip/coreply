@@ -70,8 +70,8 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
         }
         return key
     }
-    fun String.lowerAndReplaceWhiteSpaces(): String {
-        return this.replace("\\s+".toRegex(), " ").lowercase()
+    fun String.replaceWhiteSpaces(): String {
+        return this.replace("\\s+".toRegex(), " ")
     }
     fun getSuggestion(toBeCompleted: String): String? {
         if (toBeCompleted.isBlank()) {
@@ -102,8 +102,8 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
     }
 
     fun updateSuggestion(typingInfo: TypingInfo, newSuggestion: String) {
-        if(newSuggestion.lowerAndReplaceWhiteSpaces().startsWith(typingInfo.currentTyping.lowerAndReplaceWhiteSpaces())) {
-            val frontTrimmedSuggestion = newSuggestion.substring(typingInfo.currentTyping.length)
+        if(newSuggestion.replaceWhiteSpaces().lowercase().startsWith(typingInfo.currentTyping.replaceWhiteSpaces().lowercase())) {
+            val frontTrimmedSuggestion = newSuggestion.replaceWhiteSpaces().substring(typingInfo.currentTyping.replaceWhiteSpaces().length)
             val splittedText = splitAndKeepPunctuations(frontTrimmedSuggestion)
 //            Log.v("CallAI", "Splitted text: $splittedText")
             for (i in 0..splittedText.size - 2) {
@@ -185,7 +185,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
                 typingInfo.pastMessages.getCoreply2Format() + "\nIn addition to the message I sent,\n" +
                 "What else should I send? Or start a new topic?"
         if (typingInfo.currentTyping.isNotBlank()) {
-            userPrompt += "The reply should start with '${typingInfo.currentTyping}'\n"
+            userPrompt += "The reply should start with '${typingInfo.currentTyping.replace("\\s+".toRegex(), " ")}'\n"
         }
         val request = ChatCompletionRequest(
             temperature = PreferenceHelper["temperature", 3] / 10.0,
@@ -215,6 +215,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
                 )
             )
         )
+        Log.v("CallAI", "Response: ${response.choices.first().message.content}")
         return response.choices.first().message.content?.trim() ?: ""
     }
 }

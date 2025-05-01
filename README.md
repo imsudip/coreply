@@ -18,7 +18,8 @@
 -   Hinge
 -   Line (Beta)
 -   Signal (Beta)
--   Heymandi (Beta)
+-   Heymandi
+-   Gmail (Limited)
 
 _DISCLAIMER: coreply is not affiliated with or endorsed by the above-mentioned apps or their parent companies._
 
