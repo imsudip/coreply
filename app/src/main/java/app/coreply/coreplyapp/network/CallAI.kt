@@ -215,7 +215,6 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
                 )
             )
         )
-        Log.v("CallAI", "Response: ${response.choices.first().message.content}")
         return response.choices.first().message.content?.trim() ?: ""
     }
 }
