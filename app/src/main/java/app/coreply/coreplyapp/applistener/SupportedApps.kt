@@ -56,6 +56,12 @@ object SupportedApps {
             arrayOf<String>(),
             arrayOf<String>("com.vr.heymandi:id/messageText"),
         ),
+        SupportedAppProperty(
+            "com.google.android.gm",
+            "com.google.android.gm:id/inline_reply_compose_edit_text",
+            arrayOf<String>(),
+            arrayOf<String>("com.google.android.gm:id/subject_and_folder_view","com.google.android.gm:id/email_snippet"),
+        ),
 
         )
 }
