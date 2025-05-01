@@ -168,7 +168,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
     open suspend fun requestSuggestionsFromServer(
         typingInfo: TypingInfo
     ): String {
-        var baseUrl = PreferenceHelper["customApiUrl", "https://api.groq.com/openai/v1"]
+        var baseUrl = PreferenceHelper["customApiUrl", "https://api.openai.com/v1/"]
         if (!baseUrl.endsWith("/")) {
             baseUrl += "/"
         }
@@ -189,8 +189,9 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
         }
         val request = ChatCompletionRequest(
             temperature = PreferenceHelper["temperature", 3] / 10.0,
-            model = ModelId(PreferenceHelper["customModelName", "llama-3.3-70b-versatile"]),
+            model = ModelId(PreferenceHelper["customModelName", "gpt-4.1-mini"]),
             topP = PreferenceHelper["topp", 5] / 10.0,
+            maxTokens = 1000,
             messages = listOf(
                 ChatMessage(
                     role = ChatRole.System,
