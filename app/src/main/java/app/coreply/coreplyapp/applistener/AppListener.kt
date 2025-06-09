@@ -231,8 +231,8 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
 
         info.eventTypes =
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or AccessibilityEvent.TYPE_VIEW_FOCUSED
-        this.setServiceInfo(info)
         info.flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
+        this.setServiceInfo(info)
         Toast.makeText(this, getString(R.string.app_accessibility_started), Toast.LENGTH_SHORT)
             .show()
         val appContext = applicationContext
