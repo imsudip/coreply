@@ -51,7 +51,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
     private var running = false
     private var currentText: String? = null
     private val conversationList = ChatContents()
-    open val ai = CallAI(SuggestionStorageClass(this))
+    open val ai by lazy { CallAI(SuggestionStorageClass(this), this) }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         Log.v("CoWA", "event triggered")
@@ -91,7 +91,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         )
         arguments.putInt(
             AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH,
-            node.text.length
+            node.text?.length ?: 0
         )
         if (node.refreshWithExtraData(
                 AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY,
@@ -126,13 +126,17 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         } else {
             Log.v("CoWA", "Failed to refresh cursor position")
         }
+
+        if (node.refreshWithExtraData(AccessibilityNodeInfo.EXTRA_DATA_RENDERING_INFO_KEY, arguments)){
+            overlay!!.updateTextSize(node.extraRenderingInfo?.textSizeInPx)
+        }
         overlay!!.setRect(rect)
         overlay!!.update()
         return status
     }
 
     private fun onEditTextUpdate(node: AccessibilityNodeInfo, status: AppSupportStatus) {
-        var actualMessage = node.text.toString().replace("Compose Message", "")
+        var actualMessage = node.text?.toString()?.replace("Compose Message", "") ?: ""
         if (status == AppSupportStatus.HINT_TEXT || node.isShowingHintText) {
             actualMessage = ""
         }
@@ -162,7 +166,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
 
                 val status = measureWindow(triggerWidget)
                 var actualMessage =
-                    triggerWidget.getText().toString().replace("Compose Message", "")
+                    triggerWidget.getText()?.toString()?.replace("Compose Message", "") ?: ""
                 if (actualMessage == "Message") {
                     actualMessage = ""
                 }

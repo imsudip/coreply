@@ -62,6 +62,12 @@ object SupportedApps {
             arrayOf<String>(),
             arrayOf<String>("com.google.android.gm:id/subject_and_folder_view","com.google.android.gm:id/email_snippet"),
         ),
+        SupportedAppProperty(
+            "com.android.systemui",
+            "com.android.systemui:id/remote_input_text",
+            arrayOf<String>(),
+            arrayOf<String>("android:id/message_text"),
+        ),
 
         )
 }

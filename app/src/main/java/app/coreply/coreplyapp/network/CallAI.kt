@@ -19,6 +19,7 @@
 
 package app.coreply.coreplyapp.network
 
+import android.content.Context
 import android.util.Log
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
@@ -35,7 +36,7 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import app.coreply.coreplyapp.utils.ChatContents
-import app.coreply.coreplyapp.utils.PreferenceHelper
+import app.coreply.coreplyapp.data.PreferencesManager
 import app.coreply.coreplyapp.utils.SuggestionUpdateListener
 import com.aallam.openai.api.core.RequestOptions
 import kotlinx.coroutines.SupervisorJob
@@ -123,9 +124,10 @@ data class TypingInfo(val pastMessages: ChatContents, val currentTyping: String)
             .trimEnd()
 }
 
-open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
+open class CallAI(open val suggestionStorage: SuggestionStorageClass, private val context: Context) {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val preferencesManager = PreferencesManager.getInstance(context)
 
     // Flow to handle debouncing of user input
     private val userInputFlow = MutableSharedFlow<TypingInfo>(replay = 1)
@@ -133,6 +135,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
     init {
         // Launch a coroutine to collect debounced user input and fetch suggestions
         coroutineScope.launch {
+            preferencesManager.loadPreferences()
             userInputFlow // adjust debounce delay as needed
                 .debounce(200)
                 .collect { typingInfo ->
@@ -168,7 +171,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
     open suspend fun requestSuggestionsFromServer(
         typingInfo: TypingInfo
     ): String {
-        var baseUrl = PreferenceHelper["customApiUrl", "https://api.openai.com/v1/"]
+        var baseUrl = preferencesManager.customApiUrlState.value
         if (!baseUrl.endsWith("/")) {
             baseUrl += "/"
         }
@@ -177,7 +180,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
         )
         val config = OpenAIConfig(
             host = host,
-            token = PreferenceHelper["customApiKey", ""],
+            token = preferencesManager.customApiKeyState.value,
         )
 
         val openAI = OpenAI(config)
@@ -188,15 +191,15 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass) {
             userPrompt += "The reply should start with '${typingInfo.currentTyping.replace("\\s+".toRegex(), " ")}'\n"
         }
         val request = ChatCompletionRequest(
-            temperature = PreferenceHelper["temperature", 3] / 10.0,
-            model = ModelId(PreferenceHelper["customModelName", "gpt-4.1-mini"]),
-            topP = PreferenceHelper["topp", 5] / 10.0,
+            temperature = preferencesManager.temperatureState.value.toDouble(),
+            model = ModelId(preferencesManager.customModelNameState.value),
+            topP = preferencesManager.topPState.value.toDouble(),
             maxTokens = 1000,
             messages = listOf(
                 ChatMessage(
                     role = ChatRole.System,
-                    content = PreferenceHelper["customSystemPrompt", "You are an AI texting assistant. You will be given a list of text messages between the user (indicated by 'Message I sent:'), and other people (indicated by their names or simply 'Message I received:'). You may also receive a screenshot of the conversation. Your job is to suggest the next message the user should send. Match the tone and style of the conversation. The user may request the message start or end with a certain prefix (both could be parts of a longer word) . The user may quote a specific message. In this case, make sure your suggestions are about the quoted message.\n" +
-                            "Output the suggested text only. Do not output anything else. Do not surround output with quotation marks"]
+                    content = preferencesManager.customSystemPromptState.value.takeIf { it.isNotBlank() }
+                        ?: "You are an AI texting assistant. You will be given a list of text messages between the user (indicated by 'Message I sent:'), and other people (indicated by their names or simply 'Message I received:'). You may also receive a screenshot of the conversation. Your job is to suggest the next message the user should send. Match the tone and style of the conversation. The user may request the message start or end with a certain prefix (both could be parts of a longer word) . The user may quote a specific message. In this case, make sure your suggestions are about the quoted message.\nOutput the suggested text only. Do not output anything else. Do not surround output with quotation marks"
                 ),
                 ChatMessage(
                     role = ChatRole.User,

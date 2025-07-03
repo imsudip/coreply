@@ -4,12 +4,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 
+/**
+ * Legacy preference helper - for backward compatibility only.
+ * Use PreferencesManager for new preference management.
+ */
 object PreferenceHelper {
     lateinit var preferences: SharedPreferences
+    
     fun init(context: Context) {
         preferences = PreferenceManager.getDefaultSharedPreferences(context)
     }
-
 
     private inline fun SharedPreferences.edit(operation: (SharedPreferences.Editor) -> Unit) {
         val editor = this.edit()

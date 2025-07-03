@@ -21,31 +21,41 @@ package app.coreply.coreplyapp.ui
 
 import android.content.Context
 import android.content.ContextWrapper
-import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Rect
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
-import android.icu.text.BreakIterator
-import android.os.Bundle
-import android.util.Log
-import android.view.ContextThemeWrapper
 import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.TextView
-import androidx.core.content.res.ResourcesCompat
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.ComposeView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import androidx.savedstate.SavedStateRegistryOwner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import app.coreply.coreplyapp.R
 import app.coreply.coreplyapp.applistener.AppSupportStatus
+import app.coreply.coreplyapp.compose.theme.CoreplyTheme
+import app.coreply.coreplyapp.ui.compose.InlineSuggestionOverlay
+import app.coreply.coreplyapp.ui.compose.LifeCycleThings
+import app.coreply.coreplyapp.ui.compose.TrailingSuggestionOverlay
+import app.coreply.coreplyapp.ui.viewmodel.OverlayViewModel
 import app.coreply.coreplyapp.utils.PixelCalculator
-import java.util.Locale
-import java.util.StringTokenizer
 import kotlin.math.min
 
 /**
@@ -54,82 +64,108 @@ import kotlin.math.min
 
 data class SuggestionParts(val inline: String?, val trailing: String?)
 
-class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener,
-    View.OnLongClickListener {
+class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner {
 
     private lateinit var pixelCalculator: PixelCalculator
     private lateinit var windowManager: WindowManager
     private lateinit var mainParams: WindowManager.LayoutParams
     private lateinit var trailingParams: WindowManager.LayoutParams
     private var chatEntry: Rect = Rect()
-    private lateinit var inlineView: View
-    private lateinit var trailingView: View
-    private lateinit var inlineTextView: TextView
-    private lateinit var trailingTextView: TextView
+    private lateinit var inlineComposeView: ComposeView
+    private lateinit var trailingComposeView: ComposeView
+    private lateinit var viewModel: OverlayViewModel
     private var STATUSBAR_HEIGHT = 0
     private var DP8 = 0
     private var DP48 = 0
     private var DP20 = 0
-    private var node: AccessibilityNodeInfo? = null
-    private var status: AppSupportStatus = AppSupportStatus.UNSUPPORTED
-    private var bubbleBg: Drawable? = ResourcesCompat.getDrawable(
-        resources,
-        R.drawable.bubble_backgroud,
-        null
-    )
-    private var transparentBg: Drawable? = ColorDrawable(Color.TRANSPARENT)
     private var running = false
+
+    private val dummyPaint: Paint = Paint()
+
+    override val viewModelStore = ViewModelStore()
+    private val lifeCycleThings = LifeCycleThings()
 
     init {
         this.setTheme(R.style.AppTheme)
         initialize()
     }
 
+
     private fun initialize() {
         pixelCalculator = PixelCalculator(this)
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         mainParams = WindowManager.LayoutParams()
         trailingParams = WindowManager.LayoutParams()
-        STATUSBAR_HEIGHT = getResources().getDimensionPixelSize(
-            getResources().getIdentifier("status_bar_height", "dimen", "android")
+        STATUSBAR_HEIGHT = resources.getDimensionPixelSize(
+            resources.getIdentifier("status_bar_height", "dimen", "android")
         )
         DP8 = pixelCalculator.dpToPx(8)
         DP48 = pixelCalculator.dpToPx(48)
         DP20 = pixelCalculator.dpToPx(20)
 
-        val wrapper = ContextThemeWrapper(this, R.style.AppTheme)
-        val layoutInflater = LayoutInflater.from(wrapper)
-        inlineView = layoutInflater.inflate(R.layout.overlay_main, null)
-        trailingView = layoutInflater.inflate(R.layout.overlay_trailing, null)
+        // Initialize ViewModel
+        viewModel = ViewModelProvider(this)[OverlayViewModel::class.java]
 
+        // Create ComposeViews
+        inlineComposeView = ComposeView(this).apply {
+
+            setViewTreeLifecycleOwner(lifeCycleThings)
+            setViewTreeSavedStateRegistryOwner(lifeCycleThings)
+            setViewTreeViewModelStoreOwner(this@Overlay)
+            setContent {
+
+                CoreplyTheme {
+                    val uiState = viewModel.uiState
+                    if (uiState.inlineText.isNotBlank()) {
+                        InlineSuggestionOverlay(
+                            text = uiState.inlineText,
+                            textSize = uiState.inlineTextSize,
+                            showBackground = uiState.showBubbleBackground,
+                            onClick = viewModel::onInlineClick,
+                            onLongClick = viewModel::onInlineLongClick
+                        )
+                    }
+                }
+            }
+        }
+
+        trailingComposeView = ComposeView(this).apply {
+
+            setViewTreeLifecycleOwner(lifeCycleThings)
+            setViewTreeSavedStateRegistryOwner(lifeCycleThings)
+            setViewTreeViewModelStoreOwner(this@Overlay)
+            setContent {
+                CoreplyTheme {
+                    val uiState = viewModel.uiState
+                    if (uiState.trailingText.isNotBlank()) {
+                        TrailingSuggestionOverlay(
+                            text = uiState.trailingText,
+                            onClick = viewModel::onTrailingClick,
+                            onLongClick = viewModel::onTrailingLongClick
+                        )
+                    }
+                }
+            }
+        }
+
+        // Configure window parameters for inline overlay
         mainParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         mainParams.flags =
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         mainParams.format = PixelFormat.TRANSLUCENT
         mainParams.gravity = Gravity.TOP or Gravity.START
         mainParams.height = DP48
-        mainParams.alpha = 0.9f
+        mainParams.alpha = 1.0f
 
+        // Configure window parameters for trailing overlay
         trailingParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         trailingParams.flags =
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         trailingParams.format = PixelFormat.TRANSLUCENT
         trailingParams.gravity = Gravity.TOP or Gravity.START
         trailingParams.height = DP20
-        trailingParams.alpha = 0.65f
+        trailingParams.alpha = 1.0f
         trailingParams.x = DP8
-
-        inlineTextView = inlineView.findViewById<TextView>(R.id.suggestionBtn)
-        trailingTextView = trailingView.findViewById<TextView>(R.id.trailingSuggestions)
-
-        inlineTextView.text = ""
-        trailingTextView.text = ""
-
-        inlineTextView.setOnClickListener(this)
-        trailingTextView.setOnClickListener(this)
-        inlineTextView.setOnLongClickListener(this)
-        trailingTextView.setOnLongClickListener(this)
-
     }
 
     fun setRect(chatEntry: Rect) {
@@ -144,104 +180,109 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
     }
 
     fun setNode(node: AccessibilityNodeInfo, status: AppSupportStatus) {
-        this.node = node
-        this.status = status
+        viewModel.setNode(node, status)
     }
 
     fun update() {
         if (running) {
-            mainParams.y = chatEntry.top - STATUSBAR_HEIGHT
-            mainParams.height =
-                chatEntry.bottom - chatEntry.top
+            val uiState = viewModel.uiState
 
-            if (status == AppSupportStatus.HINT_TEXT) {
+            // Update positioning
+            mainParams.y = chatEntry.top - STATUSBAR_HEIGHT
+            mainParams.height = chatEntry.bottom - chatEntry.top
+
+//            // Update text size based on chat entry height
+            val textSize = (chatEntry.bottom - chatEntry.top) * 0.8f
+//            viewModel.updateTextSize(textSize)
+
+            // Update chat entry width for text measurement
+            viewModel.setChatEntryWidth(chatEntry.right - chatEntry.left)
+
+            // Update background and positioning based on status
+            val showBubbleBackground = uiState.showBubbleBackground
+            viewModel.updateBackgroundVisibility(showBubbleBackground)
+            val textWidth = dummyPaint.measureText(uiState.inlineText).toInt()
+
+            if (showBubbleBackground) {
+                // Calculate width based on text measurement (approximate)
                 mainParams.width =
-                    min(
-                        ((inlineTextView.paint.measureText(inlineTextView.text.toString()))).toInt() + DP8 * 2,
-                        chatEntry.right - chatEntry.left + DP8 * 2
-                    )
-                inlineTextView.background = bubbleBg
-                inlineTextView.setPadding(DP8, 0, DP8, 0)
+                    min(textWidth + DP8 * 3, chatEntry.right - chatEntry.left + DP8 * 2)
                 mainParams.x = chatEntry.right - mainParams.width
             } else {
-                mainParams.width =
-                    min(
-                        (inlineTextView.paint.measureText(inlineTextView.text.toString())).toInt(),
-                        chatEntry.right - chatEntry.left
-                    )
-                inlineTextView.background = transparentBg
-                inlineTextView.setPadding(0, 0, 0, 0)
+                // Calculate width based on text measurement (approximate)
+                mainParams.width = min(textWidth+ DP8, chatEntry.right - chatEntry.left)
                 mainParams.x = chatEntry.left
             }
 
-
             trailingParams.y = chatEntry.bottom - STATUSBAR_HEIGHT
 
-            if (inlineTextView.text.isBlank()) {
+            // Show/hide overlays based on content
+            if (uiState.inlineText.isBlank()) {
                 removeInlineOverlay()
             } else {
                 showInlineOverlay()
             }
 
-            if (trailingTextView.text.isBlank()) {
+            if (uiState.trailingText.isBlank()) {
                 removeTrailingOverlay()
             } else {
-                trailingParams.width =
-                    (trailingTextView.paint.measureText(trailingTextView.text.toString()) * 1.1).toInt() + DP20
+                // Calculate width based on text measurement (approximate)
+                trailingParams.width = (textWidth * 1.1).toInt() + DP20
                 showTrailingOverlay()
             }
 
-            if (inlineView.isShown) windowManager.updateViewLayout(inlineView, mainParams)
-            if (trailingView.isShown) windowManager.updateViewLayout(trailingView, trailingParams)
+            // Update view layouts if shown
+            if (inlineComposeView.isShown) windowManager.updateViewLayout(
+                inlineComposeView,
+                mainParams
+            )
+            if (trailingComposeView.isShown) windowManager.updateViewLayout(
+                trailingComposeView,
+                trailingParams
+            )
         }
     }
 
     fun updateSuggestion(suggestion: String?) {
-        var suggestion = suggestion ?: ""
         MainScope().launch {
             withContext(Dispatchers.Main) {
-                if (status == AppSupportStatus.API_BELOW_33) {
-                    inlineTextView.text = ""
-                    trailingTextView.text = suggestion.toString().toString()
-                } else if (inlineTextView.paint.measureText(suggestion) > (chatEntry.right - chatEntry.left)) {
-                    inlineTextView.text = suggestion.toString().trimEnd()
-                    trailingTextView.text = suggestion.toString().trimEnd()
-                } else {
-                    inlineTextView.text = suggestion.toString().trimEnd()
-                    trailingTextView.text = ""
-                }
+                viewModel.updateSuggestion(suggestion, dummyPaint.measureText(suggestion ?: ""))
                 update()
-
-
+                lifeCycleThings.refreshLifecycle()
             }
         }
+    }
 
+    fun updateTextSize(textSize: Float?) {
+        if (textSize == null || textSize <= 0) return
+        dummyPaint.textSize = textSize
+        viewModel.updateTextSize(pixelCalculator.pxToSp(textSize))
+        lifeCycleThings.refreshLifecycle()
     }
 
     fun disable() {
         running = false
-        trailingTextView.text = ""
-        inlineTextView.text = ""
+        viewModel.disable()
         removeInlineOverlay()
         removeTrailingOverlay()
     }
 
     fun enable() {
         running = true
+        viewModel.enable()
     }
 
     fun removeInlineOverlay() {
-        if (inlineView.isShown) {
-            windowManager.removeView(inlineView)
+        if (inlineComposeView.isShown) {
+            windowManager.removeView(inlineComposeView)
         }
     }
 
     fun removeTrailingOverlay() {
-        if (trailingView.isShown) {
-            windowManager.removeView(trailingView)
+        if (trailingComposeView.isShown) {
+            windowManager.removeView(trailingComposeView)
         }
     }
-
 
     fun showOverlays() {
         showInlineOverlay()
@@ -249,81 +290,17 @@ class Overlay(context: Context?) : ContextWrapper(context), View.OnClickListener
     }
 
     fun showInlineOverlay() {
-        if (!inlineView.isShown) {
-            windowManager.addView(inlineView, mainParams)
+
+        if (!inlineComposeView.isShown) {
+            windowManager.addView(inlineComposeView, mainParams)
         }
     }
 
     fun showTrailingOverlay() {
-        if (!trailingView.isShown) {
-            windowManager.addView(trailingView, trailingParams)
+
+        if (!trailingComposeView.isShown) {
+            windowManager.addView(trailingComposeView, trailingParams)
         }
     }
 
-    fun tokenizeText(input: String): List<String> {
-        val breakIterator = BreakIterator.getWordInstance(Locale.ROOT)
-        breakIterator.setText(input)
-        val tokens = mutableListOf<String>()
-        var start = breakIterator.first()
-        var end = breakIterator.next()
-        while (end != BreakIterator.DONE) {
-            val word = input.substring(start, end)
-            if (word.isNotEmpty()) {
-                tokens.add(word)
-            }
-            start = end
-            end = breakIterator.next()
-        }
-        return tokens
-    }
-
-
-    override fun onClick(v: View) {
-        if (v.getId() == R.id.suggestionBtn || v.id == R.id.trailingSuggestions) {
-            val arguments = Bundle()
-            val tokenizedString = tokenizeText((v as TextView).text.toString().trimEnd())
-            var addText: String = if(tokenizedString.isNotEmpty()) tokenizedString[0] else ""
-            if (addText.isBlank() && tokenizedString.size > 1) {
-                addText += tokenizedString[1]
-            }
-            if (node!!.isShowingHintText || status == AppSupportStatus.HINT_TEXT) {
-                arguments.putCharSequence(
-                    AccessibilityNodeInfo
-                        .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, addText
-
-                )
-            } else {
-                arguments.putCharSequence(
-                    AccessibilityNodeInfo
-                        .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                    node!!.text.toString()
-                        .replace("Compose Message", "") + addText
-                )
-            }
-            node!!.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
-        }
-    }
-
-    override fun onLongClick(v: View): Boolean {
-        if (v.getId() == R.id.suggestionBtn || v.id == R.id.trailingSuggestions) {
-            val arguments = Bundle()
-            if (node!!.isShowingHintText || status == AppSupportStatus.HINT_TEXT) {
-                arguments.putCharSequence(
-                    AccessibilityNodeInfo
-                        .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                    (v as TextView).text.toString().trimEnd()
-                )
-            } else {
-                arguments.putCharSequence(
-                    AccessibilityNodeInfo
-                        .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                    node!!.text.toString()
-                        .replace("Compose Message", "") + (v as TextView).text.toString()
-                        .trimEnd()
-                )
-            }
-            node!!.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
-        }
-        return true
-    }
 }
