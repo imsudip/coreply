@@ -27,30 +27,20 @@ import android.graphics.Rect
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.ComposeView
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.savedstate.SavedStateRegistry
-import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import androidx.savedstate.SavedStateRegistryOwner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import app.coreply.coreplyapp.R
 import app.coreply.coreplyapp.applistener.AppSupportStatus
-import app.coreply.coreplyapp.compose.theme.CoreplyTheme
+import app.coreply.coreplyapp.theme.CoreplyTheme
 import app.coreply.coreplyapp.ui.compose.InlineSuggestionOverlay
 import app.coreply.coreplyapp.ui.compose.LifeCycleThings
 import app.coreply.coreplyapp.ui.compose.TrailingSuggestionOverlay
@@ -189,6 +179,7 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
 
             // Update positioning
             mainParams.y = chatEntry.top - STATUSBAR_HEIGHT
+
             mainParams.height = chatEntry.bottom - chatEntry.top
 
 //            // Update text size based on chat entry height

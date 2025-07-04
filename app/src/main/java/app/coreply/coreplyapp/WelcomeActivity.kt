@@ -1,8 +1,6 @@
 package app.coreply.coreplyapp
 
-import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -21,7 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import app.coreply.coreplyapp.compose.theme.CoreplyTheme
+import app.coreply.coreplyapp.theme.CoreplyTheme
 import app.coreply.coreplyapp.utils.GlobalPref.isAccessibilityEnabled
 
 class WelcomeActivity : ComponentActivity() {

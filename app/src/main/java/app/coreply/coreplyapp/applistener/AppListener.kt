@@ -116,7 +116,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
                         } // Otherise, is a fake text, probably hint text
                     }
                 } else {
-                    rect.left += (rect.width()*0.5).toInt()
+                    rect.left += (rect.width() * 0.5).toInt()
                     status = AppSupportStatus.HINT_TEXT
                 }
             } else {
@@ -127,7 +127,11 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
             Log.v("CoWA", "Failed to refresh cursor position")
         }
 
-        if (node.refreshWithExtraData(AccessibilityNodeInfo.EXTRA_DATA_RENDERING_INFO_KEY, arguments)){
+        if (node.refreshWithExtraData(
+                AccessibilityNodeInfo.EXTRA_DATA_RENDERING_INFO_KEY,
+                arguments
+            )
+        ) {
             overlay!!.updateTextSize(node.extraRenderingInfo?.textSizeInPx)
         }
         overlay!!.setRect(rect)
@@ -147,26 +151,34 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
             overlay!!.updateSuggestion("")
             ai.onUserInputChanged(TypingInfo(conversationList, actualMessage))
         }
-        overlay!!.setNode(node,status)
+        overlay!!.setNode(node, status)
     }
 
     private fun refreshOverlay(event: AccessibilityEvent, root: AccessibilityNodeInfo): Boolean {
         var isSupportedApp = false
         for (supportedAppProperty in SupportedApps.supportedApps) {
-            val triggerWidgetList =
-                root.findAccessibilityNodeInfosByViewId(supportedAppProperty!!.triggerWidget!!)
-            if (triggerWidgetList != null && triggerWidgetList.size == 1) { // Only one trigger widget is supported
+            var (detected: Boolean, inputWidget: AccessibilityNodeInfo?) =
+                supportedAppProperty.triggerDetector(root, event)
+            if (inputWidget == null) {
+                Log.v("CoWA", "Input widget is null for ${supportedAppProperty.pkgName}")
+                inputWidget = supportedAppProperty.textInputFinder?.invoke(root)
+                Log.v("CoWA", "Input widget found: $inputWidget, detected: $detected")
+            }
+            if (detected && inputWidget != null) { // Only one trigger widget is supported
                 isSupportedApp = true
+                val info = this.serviceInfo
+                info.notificationTimeout = 50
+                info.eventTypes =
+                    AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or AccessibilityEvent.TYPE_VIEW_FOCUSED or AccessibilityEvent.TYPE_VIEW_SCROLLED
+                this.serviceInfo = info
                 currentApp = supportedAppProperty
                 currentExcludeList = supportedAppProperty.excludeWidgets
                 running = true
                 overlay!!.enable()
 
-                val triggerWidget = triggerWidgetList.get(0)
-
-                val status = measureWindow(triggerWidget)
+                val status = measureWindow(inputWidget)
                 var actualMessage =
-                    triggerWidget.getText()?.toString()?.replace("Compose Message", "") ?: ""
+                    inputWidget.text?.toString()?.replace("Compose Message", "") ?: ""
                 if (actualMessage == "Message") {
                     actualMessage = ""
                 }
@@ -174,11 +186,11 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
                     if (getMessages(root)) {
                         ai.suggestionStorage.clearSuggestion()
                     }
-                    onEditTextUpdate(triggerWidget, status)
-                } else if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && event.getPackageName() == currentApp!!.pkgName) {
+                    onEditTextUpdate(inputWidget, status)
+                } else if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED && event.getPackageName() == currentApp!!.pkgName) {
                     val refreshMessageList = getMessages(root)
                     if (refreshMessageList || actualMessage != currentText) {
-                        onEditTextUpdate(triggerWidget, status)
+                        onEditTextUpdate(inputWidget, status)
                     }
                     if (refreshMessageList) {
                         ai.suggestionStorage.clearSuggestion()
@@ -188,6 +200,11 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
             }
         }
         if (!isSupportedApp) {
+            val info = this.serviceInfo
+            info.notificationTimeout = 2000
+            info.eventTypes =
+                AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_FOCUSED
+            this.serviceInfo = info
             if (running) {
                 overlay!!.disable()
                 autoDetect = false
@@ -219,7 +236,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         for (chatNodeInfo in chatWidgets) {
             val bounds = Rect()
             chatNodeInfo.getBoundsInScreen(bounds)
-            val isMe = (bounds.left+bounds.right)/2 > (rootRect.left+rootRect.right)/2
+            val isMe = (bounds.left + bounds.right) / 2 > (rootRect.left + rootRect.right) / 2
             val message_text = chatNodeInfo.text?.toString() ?: ""
             chatMessages.add(ChatMessage(if (isMe) "Me" else "Others", message_text, ""))
         }
@@ -231,12 +248,12 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        val info = this.getServiceInfo()
+        val info = this.serviceInfo
 
         info.eventTypes =
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or AccessibilityEvent.TYPE_VIEW_FOCUSED
-        info.flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
-        this.setServiceInfo(info)
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or AccessibilityEvent.TYPE_VIEW_FOCUSED or AccessibilityEvent.TYPE_VIEW_SCROLLED
+        info.flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+        this.serviceInfo = info
         Toast.makeText(this, getString(R.string.app_accessibility_started), Toast.LENGTH_SHORT)
             .show()
         val appContext = applicationContext
