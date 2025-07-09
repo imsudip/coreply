@@ -17,6 +17,7 @@ enum class DetectedApp {
     GMAIL,
     ANDROID_SYSTEM,
     TELEGRAM,
+    MATTER_MOST,
     NOT_DETECTED
 }
 

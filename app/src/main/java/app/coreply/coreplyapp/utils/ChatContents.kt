@@ -23,15 +23,19 @@ class ChatContents {
         if (chatContents.size == 0 || other.size == 0) {
             chatContents = other
             return true
-        } else {
+        } else if (chatContents == other) (
+            return false
+        )
+        else {
             // Append new messages to the chatContents list
             if (other[0] in chatContents) {
+                val clearCurrentSuggestions = other.last().sender == "Me" && chatContents.last() == other[other.size-2]
                 for (i in other) {
                     if (i !in chatContents) {
                         chatContents.add(i)
                     }
                 }
-                return false
+                return clearCurrentSuggestions
             } else if (chatContents[0] in other) {
                 // Insert new messages to the top of chatContents list
                 for (i in chatContents) {

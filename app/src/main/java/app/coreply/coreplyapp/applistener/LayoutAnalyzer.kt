@@ -61,6 +61,7 @@ fun findNodesByCriteria(
     try {
         if (nodeChecker(rootNode)) {
             results.add(rootNode)
+
         }
     } catch (e: Exception) {
         Log.e("findNodesWithId", "Error accessing viewIdResourceName: ${e.message}")
@@ -158,6 +159,25 @@ fun telegramMessageListProcessor(node: AccessibilityNodeInfo): MutableList<ChatM
             val message_text = chatNodeInfo.text?.toString() ?: ""
             chatMessages.add(ChatMessage(if (isMe) "Me" else "Others", message_text, ""))
         }
+    }
+    //Log.v("CoWA", conversationList.toString())
+    return chatMessages
+}
+
+fun mattermostMessageListProcessor(node: AccessibilityNodeInfo): MutableList<ChatMessage> {
+    val chatMessages: MutableList<ChatMessage> = ArrayList<ChatMessage>()
+    val chatWidgetsParents: MutableList<AccessibilityNodeInfo> = findNodesByCriteria(
+        node,
+        { (it.className == "android.view.ViewGroup" && it.viewIdResourceName=="markdown_paragraph") })
+
+    val chatWidgets: MutableList<AccessibilityNodeInfo> = ArrayList<AccessibilityNodeInfo>()
+
+    chatWidgets.addAll(chatWidgetsParents.map { findNodesByCriteria(it, {it.text.isNotBlank()}) }.flatten())
+    chatWidgets.sortWith(nodeComparator)
+
+    for (chatNodeInfo in chatWidgets) {
+        val message_text = chatNodeInfo.text?.toString() ?: ""
+        chatMessages.add(ChatMessage("Others", message_text, ""))
     }
     //Log.v("CoWA", conversationList.toString())
     return chatMessages

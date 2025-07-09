@@ -166,5 +166,16 @@ object SupportedApps {
             },
             DetectedApp.TELEGRAM
         ),
+        SupportedAppProperty(
+            "com.mattermost.rn",
+            makeGeneralDetector("channel.post_draft.post.input"),
+            { _, _, id, _ -> id == "channel.post_draft.post.input" },
+            null,
+            arrayOf<String>(),
+            { mattermostMessageListProcessor(it)
+            },
+            DetectedApp.MATTER_MOST
+
+        )
         )
 }
