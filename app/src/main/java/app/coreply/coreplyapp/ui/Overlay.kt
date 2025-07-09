@@ -24,9 +24,12 @@ import android.content.ContextWrapper
 import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
+import android.os.Bundle
+import android.icu.text.BreakIterator
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -38,7 +41,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import app.coreply.coreplyapp.R
 import app.coreply.coreplyapp.applistener.AppSupportStatus
 import app.coreply.coreplyapp.theme.CoreplyTheme
 import app.coreply.coreplyapp.ui.compose.InlineSuggestionOverlay
@@ -47,6 +49,7 @@ import app.coreply.coreplyapp.ui.compose.TrailingSuggestionOverlay
 import app.coreply.coreplyapp.ui.viewmodel.OverlayViewModel
 import app.coreply.coreplyapp.utils.PixelCalculator
 import kotlin.math.min
+import java.util.Locale
 
 /**
  * Created on 1/16/17.
@@ -54,21 +57,23 @@ import kotlin.math.min
 
 data class SuggestionParts(val inline: String?, val trailing: String?)
 
-class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner {
+class Overlay(
+    context: Context?,
+    val windowManager: WindowManager,
+    private val overlayState: OverlayState
+) : ContextWrapper(context), ViewModelStoreOwner {
 
-    private lateinit var pixelCalculator: PixelCalculator
-    private lateinit var windowManager: WindowManager
-    private lateinit var mainParams: WindowManager.LayoutParams
-    private lateinit var trailingParams: WindowManager.LayoutParams
-    private var chatEntry: Rect = Rect()
-    private lateinit var inlineComposeView: ComposeView
-    private lateinit var trailingComposeView: ComposeView
-    private lateinit var viewModel: OverlayViewModel
+    private var pixelCalculator: PixelCalculator
+    private var mainParams: WindowManager.LayoutParams
+    private var trailingParams: WindowManager.LayoutParams
+    private var chatEntryRect: Rect = Rect()
+    private var inlineComposeView: ComposeView
+    private var trailingComposeView: ComposeView
+    private var viewModel: OverlayViewModel
     private var STATUSBAR_HEIGHT = 0
     private var DP8 = 0
     private var DP48 = 0
     private var DP20 = 0
-    private var running = false
 
     private val dummyPaint: Paint = Paint()
 
@@ -76,14 +81,7 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
     private val lifeCycleThings = LifeCycleThings()
 
     init {
-        this.setTheme(R.style.AppTheme)
-        initialize()
-    }
-
-
-    private fun initialize() {
         pixelCalculator = PixelCalculator(this)
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         mainParams = WindowManager.LayoutParams()
         trailingParams = WindowManager.LayoutParams()
         STATUSBAR_HEIGHT = resources.getDimensionPixelSize(
@@ -96,14 +94,12 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
         // Initialize ViewModel
         viewModel = ViewModelProvider(this)[OverlayViewModel::class.java]
 
-        // Create ComposeViews
+        // Create ComposeViews with click handlers pointing to Overlay methods
         inlineComposeView = ComposeView(this).apply {
-
             setViewTreeLifecycleOwner(lifeCycleThings)
             setViewTreeSavedStateRegistryOwner(lifeCycleThings)
             setViewTreeViewModelStoreOwner(this@Overlay)
             setContent {
-
                 CoreplyTheme {
                     val uiState = viewModel.uiState
                     if (uiState.inlineText.isNotBlank()) {
@@ -111,8 +107,8 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
                             text = uiState.inlineText,
                             textSize = uiState.inlineTextSize,
                             showBackground = uiState.showBubbleBackground,
-                            onClick = viewModel::onInlineClick,
-                            onLongClick = viewModel::onInlineLongClick
+                            onClick = { onInlineClick() },
+                            onLongClick = { onInlineLongClick() }
                         )
                     }
                 }
@@ -120,7 +116,6 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
         }
 
         trailingComposeView = ComposeView(this).apply {
-
             setViewTreeLifecycleOwner(lifeCycleThings)
             setViewTreeSavedStateRegistryOwner(lifeCycleThings)
             setViewTreeViewModelStoreOwner(this@Overlay)
@@ -130,8 +125,8 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
                     if (uiState.trailingText.isNotBlank()) {
                         TrailingSuggestionOverlay(
                             text = uiState.trailingText,
-                            onClick = viewModel::onTrailingClick,
-                            onLongClick = viewModel::onTrailingLongClick
+                            onClick = { onTrailingClick() },
+                            onLongClick = { onTrailingLongClick() }
                         )
                     }
                 }
@@ -139,13 +134,28 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
         }
 
         // Configure window parameters for inline overlay
-        mainParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        mainParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
         mainParams.flags =
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         mainParams.format = PixelFormat.TRANSLUCENT
         mainParams.gravity = Gravity.TOP or Gravity.START
         mainParams.height = DP48
         mainParams.alpha = 1.0f
+
+        // Credit: https://stackoverflow.com/questions/39671343/how-to-move-a-view-via-windowmanager-updateviewlayout-without-any-animation
+        val className = "android.view.WindowManager\$LayoutParams"
+        try {
+            val layoutParamsClass = Class.forName(className)
+            val privateFlags = layoutParamsClass.getField("privateFlags")
+            val noAnim = layoutParamsClass.getField("PRIVATE_FLAG_NO_MOVE_ANIMATION")
+
+            var privateFlagsValue = privateFlags.getInt(mainParams)
+            val noAnimFlag = noAnim.getInt(mainParams)
+            privateFlagsValue = privateFlagsValue or noAnimFlag
+            privateFlags.setInt(mainParams, privateFlagsValue)
+        } catch (e: Exception) {
+            Log.e("EXCEPT", "EXCEPTION: ${e.localizedMessage}")
+        }
 
         // Configure window parameters for trailing overlay
         trailingParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -158,36 +168,128 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
         trailingParams.x = DP8
     }
 
+    // Update reactive state method to use shared state directly
+    fun updateFromState(state: OverlayStateData) {
+        if (state.isEnabled && state.running) {
+            enable()
+            state.rect?.let { setRect(it) }
+            state.textSize?.let { updateTextSize(it) }
+            updateSuggestion(state.suggestion)
+        } else {
+            disable()
+        }
+    }
+
+    // Text action methods now use shared state
+    fun onInlineClick() {
+        val uiState = viewModel.uiState
+        performTextAction(uiState.inlineText)
+    }
+
+    fun onInlineLongClick() {
+        val uiState = viewModel.uiState
+        performFullTextAction(uiState.inlineText)
+    }
+
+    fun onTrailingClick() {
+        val uiState = viewModel.uiState
+        performTextAction(uiState.trailingText)
+    }
+
+    fun onTrailingLongClick() {
+        val uiState = viewModel.uiState
+        performFullTextAction(uiState.trailingText)
+    }
+
+    private fun tokenizeText(input: String): List<String> {
+        val PUNCTUATIONS = listOf(
+            "!", "\"", ")", ",", ".", ":",
+            ";", "?", "]", "~", "，", "：", "；", "？", "）", "】", "！", "、", "」",
+        )
+        val breakIterator = BreakIterator.getWordInstance(Locale.ROOT)
+        breakIterator.setText(input)
+        val tokens = mutableListOf<String>()
+        var start = breakIterator.first()
+        var end = breakIterator.next()
+        while (end != BreakIterator.DONE) {
+            val word = input.substring(start, end)
+            if (word.isNotEmpty()) {
+                tokens.add(word)
+            }
+            start = end
+            end = breakIterator.next()
+        }
+        if (tokens.isNotEmpty()) {
+            val lastToken = tokens.last()
+            if (tokens.size >= 2 && lastToken.length == 1 && PUNCTUATIONS.contains(lastToken)) {
+                tokens.removeAt(tokens.size - 1)
+                tokens[tokens.size - 1] = tokens[tokens.size - 1] + lastToken
+            }
+        }
+        return tokens
+    }
+
+    private fun performTextAction(text: String) {
+        val arguments = Bundle()
+        val tokenizedString = tokenizeText(text.trimEnd())
+        var addText: String = if (tokenizedString.isNotEmpty()) tokenizedString[0] else ""
+        if (addText.isBlank() && tokenizedString.size > 1) {
+            addText += tokenizedString[1]
+        }
+
+        val currentState = overlayState.getCurrentState()
+        if (currentState.node?.isShowingHintText == true || currentState.status == AppSupportStatus.HINT_TEXT) {
+            arguments.putCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                addText
+            )
+        } else {
+            Log.v("CoWA", "Performing text action with addText: ${currentState.node?.text}")
+            arguments.putCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                currentState.nodeText.replace("Compose Message", "") + addText
+            )
+        }
+        currentState.node?.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+    }
+
+    private fun performFullTextAction(text: String) {
+        val arguments = Bundle()
+        val currentState = overlayState.getCurrentState()
+        if (currentState.node?.isShowingHintText == true || currentState.status == AppSupportStatus.HINT_TEXT) {
+            arguments.putCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                text.trimEnd()
+            )
+        } else {
+            arguments.putCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                currentState.nodeText.replace("Compose Message", "") + text.trimEnd()
+            )
+        }
+        currentState.node?.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+    }
+
     fun setRect(chatEntry: Rect) {
-        this.chatEntry = chatEntry
+        this.chatEntryRect = chatEntry
     }
 
     fun setRect(top: Int, bottom: Int, left: Int, right: Int) {
-        if (top != -1) chatEntry.top = top
-        if (bottom != -1) chatEntry.bottom = bottom
-        if (left != -1) chatEntry.left = left
-        if (right != -1) chatEntry.right = right
-    }
-
-    fun setNode(node: AccessibilityNodeInfo, status: AppSupportStatus) {
-        viewModel.setNode(node, status)
+        if (top != -1) chatEntryRect.top = top
+        if (bottom != -1) chatEntryRect.bottom = bottom
+        if (left != -1) chatEntryRect.left = left
+        if (right != -1) chatEntryRect.right = right
     }
 
     fun update() {
-        if (running) {
+        val currentState = overlayState.getCurrentState()
+        if (currentState.running) {
             val uiState = viewModel.uiState
 
             // Update positioning
-            mainParams.y = chatEntry.top - STATUSBAR_HEIGHT
-
-            mainParams.height = chatEntry.bottom - chatEntry.top
-
-//            // Update text size based on chat entry height
-            val textSize = (chatEntry.bottom - chatEntry.top) * 0.8f
-//            viewModel.updateTextSize(textSize)
-
-            // Update chat entry width for text measurement
-            viewModel.setChatEntryWidth(chatEntry.right - chatEntry.left)
+            //Log.v("CoWA", "Overlay update: mainParams.y=${mainParams.y}")
+            mainParams.y = chatEntryRect.top - STATUSBAR_HEIGHT
+            mainParams.height = chatEntryRect.bottom - chatEntryRect.top
 
             // Update background and positioning based on status
             val showBubbleBackground = uiState.showBubbleBackground
@@ -195,17 +297,15 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
             val textWidth = dummyPaint.measureText(uiState.inlineText).toInt()
 
             if (showBubbleBackground) {
-                // Calculate width based on text measurement (approximate)
                 mainParams.width =
-                    min(textWidth + DP8 * 3, chatEntry.right - chatEntry.left + DP8 * 2)
-                mainParams.x = chatEntry.right - mainParams.width
+                    min(textWidth + DP8 * 3, currentState.chatEntryWidth + DP8 * 2)
+                mainParams.x = chatEntryRect.right - mainParams.width
             } else {
-                // Calculate width based on text measurement (approximate)
-                mainParams.width = min(textWidth+ DP8, chatEntry.right - chatEntry.left)
-                mainParams.x = chatEntry.left
+                mainParams.width = min(textWidth + DP8, currentState.chatEntryWidth)
+                mainParams.x = chatEntryRect.left
             }
 
-            trailingParams.y = chatEntry.bottom - STATUSBAR_HEIGHT
+            trailingParams.y = chatEntryRect.bottom - STATUSBAR_HEIGHT
 
             // Show/hide overlays based on content
             if (uiState.inlineText.isBlank()) {
@@ -217,30 +317,29 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
             if (uiState.trailingText.isBlank()) {
                 removeTrailingOverlay()
             } else {
-                // Calculate width based on text measurement (approximate)
                 trailingParams.width = (textWidth * 1.1).toInt() + DP20
                 showTrailingOverlay()
             }
 
             // Update view layouts if shown
-            if (inlineComposeView.isShown) windowManager.updateViewLayout(
-                inlineComposeView,
-                mainParams
-            )
-            if (trailingComposeView.isShown) windowManager.updateViewLayout(
-                trailingComposeView,
-                trailingParams
-            )
+            if (inlineComposeView.isShown) {
+                windowManager.updateViewLayout(inlineComposeView, mainParams)
+            }
+            if (trailingComposeView.isShown) {
+                windowManager.updateViewLayout(trailingComposeView, trailingParams)
+            }
+            //Log.v("CoWA", "Overlay updated: y=${mainParams.y},")
         }
     }
 
     fun updateSuggestion(suggestion: String?) {
         MainScope().launch {
             withContext(Dispatchers.Main) {
-                viewModel.updateSuggestion(suggestion, dummyPaint.measureText(suggestion ?: ""))
-                update()
+                val currentState = overlayState.getCurrentState()
+                val textWidth = dummyPaint.measureText(suggestion ?: "")
+                viewModel.updateSuggestion(suggestion, textWidth, currentState.chatEntryWidth, currentState.status)
                 lifeCycleThings.refreshLifecycle()
-            }
+                update()            }
         }
     }
 
@@ -252,14 +351,12 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
     }
 
     fun disable() {
-        running = false
         viewModel.disable()
         removeInlineOverlay()
         removeTrailingOverlay()
     }
 
     fun enable() {
-        running = true
         viewModel.enable()
     }
 
@@ -281,17 +378,14 @@ class Overlay(context: Context?) : ContextWrapper(context), ViewModelStoreOwner 
     }
 
     fun showInlineOverlay() {
-
         if (!inlineComposeView.isShown) {
             windowManager.addView(inlineComposeView, mainParams)
         }
     }
 
     fun showTrailingOverlay() {
-
         if (!trailingComposeView.isShown) {
             windowManager.addView(trailingComposeView, trailingParams)
         }
     }
-
 }

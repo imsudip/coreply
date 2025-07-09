@@ -13,23 +13,25 @@ class ChatContents {
         chatContents.add(chatMessage)
     }
 
+    fun clear(){
+        chatContents.clear()
+    }
+
     // compare the chatContents list with another ChatContents list and combine them if they have ChatMessage objects in common
     // Returns a boolean, true if needs new suggestions
     fun combineChatContents(other: MutableList<ChatMessage>): Boolean {
-        if (chatContents.size < 1 || other.size < 1) {
+        if (chatContents.size == 0 || other.size == 0) {
             chatContents = other
-            return false
+            return true
         } else {
             // Append new messages to the chatContents list
             if (other[0] in chatContents) {
-                var newEnd = false
                 for (i in other) {
                     if (i !in chatContents) {
                         chatContents.add(i)
-                        newEnd = true
                     }
                 }
-                return newEnd
+                return false
             } else if (chatContents[0] in other) {
                 // Insert new messages to the top of chatContents list
                 for (i in chatContents) {
@@ -41,7 +43,7 @@ class ChatContents {
                 return false
             } else {
                 chatContents = other
-                return true
+                return false
             }
         }
     }

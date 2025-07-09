@@ -8,6 +8,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +22,8 @@ import app.coreply.coreplyapp.WelcomeActivity
 import app.coreply.coreplyapp.ui.viewmodel.SettingsViewModel
 import app.coreply.coreplyapp.utils.GlobalPref
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -154,6 +158,7 @@ fun ModernSettingsScreen(
 @Composable
 fun CustomApiSettingsSection(viewModel: SettingsViewModel) {
     val uiState = viewModel.uiState
+    var showApiKey by remember { mutableStateOf(false) }
 
 
     Column(
@@ -168,6 +173,7 @@ fun CustomApiSettingsSection(viewModel: SettingsViewModel) {
 
         // API URL
         OutlinedTextField(
+
             value = uiState.customApiUrl,
             onValueChange = viewModel::updateCustomApiUrl,
             label = { Text("API URL") },
@@ -175,6 +181,7 @@ fun CustomApiSettingsSection(viewModel: SettingsViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
+
         )
 
         // API Key
@@ -184,7 +191,18 @@ fun CustomApiSettingsSection(viewModel: SettingsViewModel) {
             supportingText = { Text("Your API authentication key") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp)
+                .padding(bottom = 12.dp),
+            trailingIcon = {
+                IconButton(onClick = {
+                    showApiKey = !showApiKey
+                }) {
+                    Icon(
+                        imageVector = if (showApiKey) Icons.Default.Lock else Icons.Default.Info,
+                        contentDescription = if (showApiKey) "Hide API Key" else "Show API Key"
+                    )
+                }
+            },
+            visualTransformation = if(showApiKey) VisualTransformation.None else PasswordVisualTransformation()
         )
 
         // Model Name

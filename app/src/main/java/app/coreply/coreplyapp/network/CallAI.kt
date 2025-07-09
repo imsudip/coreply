@@ -39,9 +39,12 @@ import app.coreply.coreplyapp.utils.ChatContents
 import app.coreply.coreplyapp.data.PreferencesManager
 import app.coreply.coreplyapp.utils.SuggestionUpdateListener
 import com.aallam.openai.api.core.RequestOptions
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.sample
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.compareTo
+import kotlin.text.get
 
 
 class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = null) {
@@ -53,7 +56,21 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
     private val PUNCTUATIONS_REGEX = "(?=[!\")\\],.:;?~，。：；？）】！、」])".toRegex()
 
     fun splitAndKeepPunctuations(text: String): List<String> {
-        return text.split(PUNCTUATIONS_REGEX).filter { it.isNotEmpty() }
+        val parts = text.split(PUNCTUATIONS_REGEX).filter { it.isNotEmpty() }
+
+        if (parts.size < 2) return parts
+
+        // Check if the last part is just punctuation
+        else{
+            val lastPart = parts.last()
+            if (lastPart.length == 1 && PUNCTUATIONS.contains(lastPart)) {
+                // Merge the last punctuation with the second-to-last part
+                val modifiedParts = parts.dropLast(2).toMutableList()
+                modifiedParts.add(parts[parts.size - 2] + lastPart)
+                return modifiedParts
+            }
+        }
+        return parts
     }
 
 
@@ -102,6 +119,12 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
         this.listener = listener
     }
 
+    fun addSuggestionWithoutReplacement(key: String, suggestion: String) {
+        if (!_suggestionHistory.containsKey(key)) {
+            _suggestionHistory[key] = suggestion
+        }
+    }
+
     fun updateSuggestion(typingInfo: TypingInfo, newSuggestion: String) {
         if(newSuggestion.replaceWhiteSpaces().lowercase().startsWith(typingInfo.currentTyping.replaceWhiteSpaces().lowercase())) {
             val frontTrimmedSuggestion = newSuggestion.replaceWhiteSpaces().substring(typingInfo.currentTyping.replaceWhiteSpaces().length)
@@ -109,10 +132,9 @@ class SuggestionStorageClass(private var listener: SuggestionUpdateListener? = n
 //            Log.v("CallAI", "Splitted text: $splittedText")
             for (i in 0..splittedText.size - 2) {
 //                Log.v("CallAI", getKeyFromText(typingInfo.currentTyping + splittedText.subList(0, i + 1).joinToString("")))
-                _suggestionHistory[getKeyFromText(typingInfo.currentTyping + splittedText.subList(0, i + 1).joinToString(""))] =
-                    splittedText[i + 1]
+                addSuggestionWithoutReplacement(getKeyFromText(typingInfo.currentTyping + splittedText.subList(0, i + 1).joinToString("")), splittedText[i + 1])
             }
-            _suggestionHistory[getKeyFromText(typingInfo.currentTyping)] = if( splittedText.isNotEmpty()) splittedText[0] else ""
+            addSuggestionWithoutReplacement(getKeyFromText(typingInfo.currentTyping), if( splittedText.isNotEmpty()) splittedText[0] else "")
             listener?.onSuggestionUpdated(typingInfo, frontTrimmedSuggestion) // huh actually the arguments are unused
         }
     }
@@ -124,10 +146,11 @@ data class TypingInfo(val pastMessages: ChatContents, val currentTyping: String)
             .trimEnd()
 }
 
-open class CallAI(open val suggestionStorage: SuggestionStorageClass, private val context: Context) {
+@OptIn(FlowPreview::class)
+open class CallAI(open val suggestionStorage: SuggestionStorageClass, private val context: Context?) {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val preferencesManager = PreferencesManager.getInstance(context)
+    private val preferencesManager = if (context==null) null else PreferencesManager.getInstance(context)
 
     // Flow to handle debouncing of user input
     private val userInputFlow = MutableSharedFlow<TypingInfo>(replay = 1)
@@ -135,7 +158,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass, private va
     init {
         // Launch a coroutine to collect debounced user input and fetch suggestions
         coroutineScope.launch {
-            preferencesManager.loadPreferences()
+            preferencesManager?.loadPreferences()
             userInputFlow // adjust debounce delay as needed
                 .debounce(200)
                 .collect { typingInfo ->
@@ -155,6 +178,10 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass, private va
 
     private suspend fun fetchSuggestions(typingInfo: TypingInfo) {
         try {
+            if (typingInfo.currentTyping.isBlank() && typingInfo.pastMessages.chatContents.isEmpty()) {
+                // If no current typing and no past messages, do nothing
+                return
+            }
             var suggestions =
                 requestSuggestionsFromServer(typingInfo)
             suggestions = suggestions.replace("\n", " ")
@@ -171,7 +198,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass, private va
     open suspend fun requestSuggestionsFromServer(
         typingInfo: TypingInfo
     ): String {
-        var baseUrl = preferencesManager.customApiUrlState.value
+        var baseUrl = preferencesManager!!.customApiUrlState.value
         if (!baseUrl.endsWith("/")) {
             baseUrl += "/"
         }
@@ -209,6 +236,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass, private va
 
                 ),
         )
+        //Log.v("CallAI", "Requesting suggestions with prompt: $userPrompt")
         val response = openAI.chatCompletion(
             request,
             RequestOptions(
@@ -218,6 +246,7 @@ open class CallAI(open val suggestionStorage: SuggestionStorageClass, private va
                 )
             )
         )
+        //Log.v("CallAI", "Response: ${response.choices.first().message.content?.trim()}")
         return response.choices.first().message.content?.trim() ?: ""
     }
 }
