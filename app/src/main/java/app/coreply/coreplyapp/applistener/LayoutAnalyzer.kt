@@ -87,7 +87,10 @@ fun notificationMessageListProcessor(node: AccessibilityNodeInfo): MutableList<C
     if (textInputNode == null) {
         return mutableListOf()
     }
-    val targetAreas = node.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expanded")
+    var targetAreas = node.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expanded")
+    if (targetAreas.isEmpty()) {
+        targetAreas = node.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expandableNotificationRow")
+    }
 
     // Get the rect of the text input node
     val textInputRect = Rect()

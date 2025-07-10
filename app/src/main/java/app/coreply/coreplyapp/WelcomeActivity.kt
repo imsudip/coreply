@@ -83,13 +83,13 @@ fun WelcomeScreen(
                     buttonContent = {
                         Button(
                             onClick = {
-                                context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
                                 if (!isAccessibilityEnabled(context)) {
                                     // Navigate to accessibility permission
                                     val intent = Intent(context, WelcomeActivity::class.java)
                                     intent.putExtra("page", 2)
                                     context.startActivity(intent)
                                 }
+                                context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
                                 onFinish()
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -129,13 +129,13 @@ fun WelcomeScreen(
                             Text("I Accept")
                         }
                         
-                        TextButton(
-                            onClick = { 
-                                // TODO: Implement video tutorial
-                            }
-                        ) {
-                            Text("Watch Setup Tutorial")
-                        }
+//                        TextButton(
+//                            onClick = {
+//                                // TODO: Implement video tutorial
+//                            }
+//                        ) {
+//                            Text("Watch Setup Tutorial")
+//                        }
                     }
                 )
                 3 -> PermissionContent(

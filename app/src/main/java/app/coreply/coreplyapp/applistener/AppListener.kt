@@ -178,6 +178,10 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         if (status == AppSupportStatus.HINT_TEXT || node.isShowingHintText) {
             actualMessage = ""
         }
+
+        if (actualMessage == currentText){
+            return
+        }
         currentText = actualMessage
 
         // Update state instead of direct overlay calls
@@ -261,7 +265,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         info.eventTypes =
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or AccessibilityEvent.TYPE_VIEW_FOCUSED or AccessibilityEvent.TYPE_VIEW_SCROLLED
         info.flags =
-            AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+            AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
         this.serviceInfo = info
         Toast.makeText(this, getString(R.string.app_accessibility_started), Toast.LENGTH_SHORT)
             .show()
@@ -409,6 +413,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
                 arguments
             )
         ) {
+            //Log.v("CoWA", "Text size in px: ${node.extraRenderingInfo?.textSizeInPx}")
             withContext(Dispatchers.Main) {
                 overlayState?.updateTextSize(node.extraRenderingInfo?.textSizeInPx ?: 36f)
             }

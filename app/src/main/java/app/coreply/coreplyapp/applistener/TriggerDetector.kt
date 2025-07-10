@@ -40,13 +40,20 @@ fun detectSupportedApp(rootNode: AccessibilityNodeInfo?): Pair<SupportedAppPrope
     return Pair(null, null)
 }
 
-fun makeGeneralDetector(targetId: String, returnTrigger: Boolean = true): (AccessibilityNodeInfo, AccessibilityEvent?) -> Pair<Boolean, AccessibilityNodeInfo?> {
+fun makeGeneralDetector(
+    targetId: String,
+    returnTrigger: Boolean = true
+): (AccessibilityNodeInfo, AccessibilityEvent?) -> Pair<Boolean, AccessibilityNodeInfo?> {
     return { node: AccessibilityNodeInfo, event: AccessibilityEvent? ->
         generalDetector(node, targetId, returnTrigger)
     }
 }
 
-fun generalDetector(node: AccessibilityNodeInfo, targetId: String, returnTrigger: Boolean = true): Pair<Boolean, AccessibilityNodeInfo?> {
+fun generalDetector(
+    node: AccessibilityNodeInfo,
+    targetId: String,
+    returnTrigger: Boolean = true
+): Pair<Boolean, AccessibilityNodeInfo?> {
     val triggerWidgetList =
         node.findAccessibilityNodeInfosByViewId(targetId)
     //iterNode(node)
@@ -61,7 +68,10 @@ fun generalDetector(node: AccessibilityNodeInfo, targetId: String, returnTrigger
 /**
  * Checks if a content node is above an input widget in screen coordinates
  */
-private fun isContentNodeAboveInput(contentNode: AccessibilityNodeInfo?, inputNode: AccessibilityNodeInfo?): Boolean {
+private fun isContentNodeAboveInput(
+    contentNode: AccessibilityNodeInfo?,
+    inputNode: AccessibilityNodeInfo?
+): Boolean {
     if (contentNode == null || inputNode == null) {
         return false
     }
@@ -74,7 +84,7 @@ private fun isContentNodeAboveInput(contentNode: AccessibilityNodeInfo?, inputNo
         inputNode.getBoundsInScreen(inputRect)
         // Check if the content node's bottom is above the input's top
 
-        return (contentRect.top + contentRect.bottom)/2 < inputRect.bottom
+        return (contentRect.top + contentRect.bottom) / 2 < inputRect.bottom
     } catch (e: Exception) {
         Log.e("TriggerDetector", "Error checking node positions: ${e.message}")
         return false
@@ -83,7 +93,7 @@ private fun isContentNodeAboveInput(contentNode: AccessibilityNodeInfo?, inputNo
 
 fun telegramDetector(node: AccessibilityNodeInfo): Pair<Boolean, AccessibilityNodeInfo?> {
     val contentNodes = node.findAccessibilityNodeInfosByViewId("android:id/content")
-    if (contentNodes != null && contentNodes.size == 1){
+    if (contentNodes != null && contentNodes.size == 1) {
         val contentNode = contentNodes[0]
         if (contentNode.packageName == "org.telegram.messenger") {
             val inputWidget = node.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
@@ -98,8 +108,11 @@ fun telegramDetector(node: AccessibilityNodeInfo): Pair<Boolean, AccessibilityNo
     return Pair(false, null)
 }
 
-fun iterNode(node: AccessibilityNodeInfo){
-    Log.v("CoWA", "iterNode: node=${node.className}, text=${node.text}, contentDescription=${node.contentDescription}, viewId=${node.viewIdResourceName}")
+fun iterNode(node: AccessibilityNodeInfo) {
+    Log.v(
+        "CoWA",
+        "iterNode: node=${node.className}, text=${node.text}, contentDescription=${node.contentDescription}, viewId=${node.viewIdResourceName}"
+    )
     for (i in 0 until node.childCount) {
         val child = node.getChild(i)
         if (child != null) {

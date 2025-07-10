@@ -133,7 +133,7 @@ object SupportedApps {
                 "com.android.systemui:id/expanded",//"com.android.systemui:id/expandableNotificationRow",
                 returnTrigger = false
             ),
-            { root, _, id, pkg -> root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expanded").isNotEmpty() },
+            { root, _, id, pkg -> root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expandableNotificationRow").isNotEmpty() || root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expanded").isNotEmpty() },
             { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
             arrayOf<String>(),
             { node: AccessibilityNodeInfo ->

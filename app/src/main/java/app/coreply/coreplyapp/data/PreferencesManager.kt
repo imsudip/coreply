@@ -41,8 +41,8 @@ class PreferencesManager private constructor(private val dataStore: DataStore<Pr
         val CUSTOM_API_KEY = stringPreferencesKey("customApiKey")
         val CUSTOM_MODEL_NAME = stringPreferencesKey("customModelName")
         val CUSTOM_SYSTEM_PROMPT = stringPreferencesKey("customSystemPrompt")
-        val TEMPERATURE = floatPreferencesKey("temperature")
-        val TOP_P = floatPreferencesKey("topp")
+        val TEMPERATURE = floatPreferencesKey("temperature_float")
+        val TOP_P = floatPreferencesKey("topp_float")
 
         // Default values
         private const val DEFAULT_MASTER_SWITCH = true

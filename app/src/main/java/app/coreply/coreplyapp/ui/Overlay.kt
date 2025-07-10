@@ -75,7 +75,11 @@ class Overlay(
     private var DP48 = 0
     private var DP20 = 0
 
-    private val dummyPaint: Paint = Paint()
+    private val dummyPaint: Paint = Paint().apply {
+        isAntiAlias = true
+        typeface = android.graphics.Typeface.DEFAULT
+        textSize = 48f // S
+    }
 
     override val viewModelStore = ViewModelStore()
     private val lifeCycleThings = LifeCycleThings()
@@ -84,9 +88,6 @@ class Overlay(
         pixelCalculator = PixelCalculator(this)
         mainParams = WindowManager.LayoutParams()
         trailingParams = WindowManager.LayoutParams()
-        STATUSBAR_HEIGHT = resources.getDimensionPixelSize(
-            resources.getIdentifier("status_bar_height", "dimen", "android")
-        )
         DP8 = pixelCalculator.dpToPx(8)
         DP48 = pixelCalculator.dpToPx(48)
         DP20 = pixelCalculator.dpToPx(20)
@@ -141,6 +142,7 @@ class Overlay(
         mainParams.gravity = Gravity.TOP or Gravity.START
         mainParams.height = DP48
         mainParams.alpha = 1.0f
+        mainParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
 
         // Credit: https://stackoverflow.com/questions/39671343/how-to-move-a-view-via-windowmanager-updateviewlayout-without-any-animation
         val className = "android.view.WindowManager\$LayoutParams"
@@ -158,7 +160,7 @@ class Overlay(
         }
 
         // Configure window parameters for trailing overlay
-        trailingParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        trailingParams.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
         trailingParams.flags =
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         trailingParams.format = PixelFormat.TRANSLUCENT
@@ -166,6 +168,7 @@ class Overlay(
         trailingParams.height = DP20
         trailingParams.alpha = 1.0f
         trailingParams.x = DP8
+        trailingParams.layoutInDisplayCutoutMode =WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
     }
 
     // Update reactive state method to use shared state directly
@@ -288,24 +291,25 @@ class Overlay(
 
             // Update positioning
             //Log.v("CoWA", "Overlay update: mainParams.y=${mainParams.y}")
-            mainParams.y = chatEntryRect.top - STATUSBAR_HEIGHT
+            mainParams.y = chatEntryRect.top
             mainParams.height = chatEntryRect.bottom - chatEntryRect.top
 
             // Update background and positioning based on status
             val showBubbleBackground = uiState.showBubbleBackground
             viewModel.updateBackgroundVisibility(showBubbleBackground)
-            val textWidth = dummyPaint.measureText(uiState.inlineText).toInt()
+            val inlineTextWidth = dummyPaint.measureText(uiState.inlineText).toInt()
+            val trailingTextWidth = dummyPaint.measureText(uiState.trailingText).toInt()
 
             if (showBubbleBackground) {
                 mainParams.width =
-                    min(textWidth + DP8 * 3, currentState.chatEntryWidth + DP8 * 2)
+                    min(inlineTextWidth + DP8 * 3, currentState.chatEntryWidth + DP8 * 2)
                 mainParams.x = chatEntryRect.right - mainParams.width
             } else {
-                mainParams.width = min(textWidth + DP8, currentState.chatEntryWidth)
+                mainParams.width = min(inlineTextWidth + DP8, currentState.chatEntryWidth)
                 mainParams.x = chatEntryRect.left
             }
 
-            trailingParams.y = chatEntryRect.bottom - STATUSBAR_HEIGHT
+            trailingParams.y = chatEntryRect.bottom
 
             // Show/hide overlays based on content
             if (uiState.inlineText.isBlank()) {
@@ -317,7 +321,7 @@ class Overlay(
             if (uiState.trailingText.isBlank()) {
                 removeTrailingOverlay()
             } else {
-                trailingParams.width = (textWidth * 1.1).toInt() + DP20
+                trailingParams.width = trailingTextWidth + DP20 + DP8
                 showTrailingOverlay()
             }
 
@@ -328,7 +332,7 @@ class Overlay(
             if (trailingComposeView.isShown) {
                 windowManager.updateViewLayout(trailingComposeView, trailingParams)
             }
-            //Log.v("CoWA", "Overlay updated: y=${mainParams.y},")
+            Log.v("CoWA", "Overlay updated: y=${chatEntryRect.bottom},")
         }
     }
 
@@ -337,9 +341,15 @@ class Overlay(
             withContext(Dispatchers.Main) {
                 val currentState = overlayState.getCurrentState()
                 val textWidth = dummyPaint.measureText(suggestion ?: "")
-                viewModel.updateSuggestion(suggestion, textWidth, currentState.chatEntryWidth, currentState.status)
+                viewModel.updateSuggestion(
+                    suggestion,
+                    textWidth,
+                    currentState.chatEntryWidth,
+                    currentState.status
+                )
                 lifeCycleThings.refreshLifecycle()
-                update()            }
+                update()
+            }
         }
     }
 
