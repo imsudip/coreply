@@ -11,8 +11,8 @@ android {
         applicationId = "app.coreply.coreplyapp"
         minSdk = 30
         targetSdk = 35
-        versionCode = 7
-        versionName = "2.1.0"
+        versionCode = 8
+        versionName = "2.1.1"
         vectorDrawables.useSupportLibrary = true
     }
     compileOptions {
