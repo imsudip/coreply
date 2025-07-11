@@ -4,7 +4,9 @@
 
 ## Features
 
-![coreply demo](./docs/static/coreply_demo.gif)
+<div align="center">
+  <img src="./docs/static/coreply_demo.gif" width="360" />
+</div>
 
 -   **Real-time AI Suggestions**: Get accurate, context-aware suggestions as you type.
 -   **Customizable LLM Settings**: Supports any inference service having a OpenAI compatible API.
@@ -12,14 +14,18 @@
 
 ## Supported Texting Apps
 
--   WhatsApp
--   Instagram
--   Tinder
--   Hinge
--   Line (Beta)
--   Signal (Beta)
--   Heymandi
--   Gmail (Limited)
+| WhatsApp                             | Instagram             |
+|--------------------------------------|----------------------|
+| ![](./docs/static/whatsapp.gif)      | ![](./docs/static/insta.gif) |
+| Tinder                               | Signal               |
+| ![](./docs/static/tinder.gif)        | ![](./docs/static/signal.gif) |
+| Notification Replies                 | Hinge                |
+| ![](./docs/static/notifications.gif) |  |
+| LINE                                 | Heymandi             |
+| Gmail (Limited)                      | Telegram             |
+| Mattermost                           |                      |
+
+Other supported apps: Hinge, Line, Heymandi, Gmail (Limited), Telegram, Mattermost
 
 _DISCLAIMER: coreply is not affiliated with or endorsed by the above-mentioned apps or their parent companies._
 
@@ -27,7 +33,7 @@ _DISCLAIMER: coreply is not affiliated with or endorsed by the above-mentioned a
 
 ### Prerequisites
 
--   Device running Android 13 or higher
+-   Device running **Android 10 or higher** (Android 13 or higher recommended)
 -   API key for an OpenAI-compatible inference service, such as [Groq](https://console.groq.com/) and [Openrouter](https://openrouter.ai/)
 -   ⚠️Do note that OpenAI models are not supported due to the lack to output prefill controls. See [Model Selection & Providers](./docs/models.md) for more details.
 
