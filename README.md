@@ -1,6 +1,6 @@
 ![Coreply banner](./docs/static/coreply_banner.png)
 
-**Coreply** is an open-source Android app designed to make texting faster and smarter by providing AI-generated auto-fill suggestions while you type. Whether you're replying to friends, family, or colleagues, coreply enhances your typing experience with intelligent, context-aware suggestions.
+**Coreply** is an open-source Android app designed to make texting faster and smarter by providing texting suggestions while you type. Whether you're replying to friends, family, or colleagues, Coreply enhances your typing experience with intelligent, context-aware suggestions.
 
 ## Supported Texting Apps
 
@@ -28,8 +28,8 @@ _DISCLAIMER: Coreply is not affiliated with or endorsed by the above-mentioned a
 </div>
 
 -   **Real-time AI Suggestions**: Get accurate, context-aware suggestions as you type.
--   **Customizable LLM Settings**: Supports any inference service having a OpenAI compatible API.
--   **No Data Collection**: All traffic goes directly to the inference API. No data passes through intermediate servers.
+-   **Customizable LLM Settings**: Supports any inference service having an OpenAI compatible API.
+-   **No Data Collection**: All traffic goes directly to the inference API. No data passes through intermediate servers (except for the hosted version).
 
 ## Getting Started
 
@@ -43,7 +43,7 @@ _DISCLAIMER: Coreply is not affiliated with or endorsed by the above-mentioned a
 1. Download the latest APK from the [releases page](https://github.com/coreply/coreply/releases)
 2. Install the APK on your Android device.
 3. Setup the app with your API key, baseURL (if not using OpenAI) and model name.
-4. Toggle the switch and grant necessary permissions to enable the service.
+4. Toggle the switch and grant necessary permissions to enable the service. If you encountered the "Restricted settings" dialog, you can follow [these steps](https://support.google.com/android/answer/12623953?hl=en).
 5. Start typing in your messaging app, and see suggestions appear! Single tap on the suggestion to insert one word, or long press to insert the entire suggestion.
 
 ### Build From Source
@@ -72,17 +72,10 @@ See [Model Selection & Providers](./docs/models.md) for details.
 
 All contributions are welcome! However, the code was based on an old project in 2016, so please be patient with the code quality and expect major architectural changes in the future.
 
-## Roadmap
-
-### Planned Features
-
--   Hosted version
--   Support for more messaging apps
-
-### Known Issues
+## Known Issues
 
 -   The app cannot read images, videos, voice notes, or other non-text content. Contextual suggestions may be limited in these cases.
--   ~~Autofill suggestions in WhatsApp on a non-English locale may include extra words. This is a known issue and will be fixed in a future release.~~ Fixed in v1.0.
+-   Hint text 'Message' in WhatsApp is treated as typed text on devices running Android 12 or lower.
 -   Banking apps in asia commonly block apps from unknown sources having accessibility services permission due to security reasons. If you are facing this issue, you can setup [an accessibility shortcut](https://support.google.com/accessibility/android/answer/7650693?hl=en#step_1) to toggle the coreply on/off quickly. In the future there might be a Play Store listing to avoid this issue.
 
 ## License Notice
