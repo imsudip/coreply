@@ -1,5 +1,8 @@
-![Coreply banner](./docs/static/coreply_banner.png)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/coreply/coreply/total)
+![GitHub Tag](https://img.shields.io/github/v/tag/coreply/coreply)
+![GitHub License](https://img.shields.io/github/license/coreply/coreply)
 
+![Coreply banner](./docs/static/narrowbanner.png)
 **Coreply** is an open-source Android app designed to make texting faster and smarter by providing texting suggestions while you type. Whether you're replying to friends, family, or colleagues, Coreply enhances your typing experience with intelligent, context-aware suggestions.
 
 ## Supported Texting Apps
@@ -77,6 +80,10 @@ All contributions are welcome! However, the code was based on an old project in 
 -   The app cannot read images, videos, voice notes, or other non-text content. Contextual suggestions may be limited in these cases.
 -   Hint text 'Message' in WhatsApp is treated as typed text on devices running Android 12 or lower.
 -   Banking apps in asia commonly block apps from unknown sources having accessibility services permission due to security reasons. If you are facing this issue, you can setup [an accessibility shortcut](https://support.google.com/accessibility/android/answer/7650693?hl=en#step_1) to toggle the coreply on/off quickly. In the future there might be a Play Store listing to avoid this issue.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=coreply/coreply&type=Date)](https://www.star-history.com/#coreply/coreply&Date)
 
 ## License Notice
 
