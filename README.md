@@ -8,7 +8,7 @@
 ## Supported Texting Apps
 
 |                                      |                               |
-| ------------------------------------ | ----------------------------- |
+|--------------------------------------| ----------------------------- |
 | **WhatsApp**                         | **Instagram**                 |
 | ![](./docs/static/whatsapp.gif)      | ![](./docs/static/insta.gif)  |
 | **Tinder**                           | **Signal**                    |
