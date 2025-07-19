@@ -133,7 +133,11 @@ object SupportedApps {
                 "com.android.systemui:id/expanded",//"com.android.systemui:id/expandableNotificationRow",
                 returnTrigger = false
             ),
-            { root, _, id, pkg -> root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expandableNotificationRow").isNotEmpty() || root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expanded").isNotEmpty() },
+            { root, _, id, pkg ->
+                root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expandableNotificationRow")
+                    .isNotEmpty() || root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/expanded")
+                    .isNotEmpty()
+            },
             { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
             arrayOf<String>(),
             { node: AccessibilityNodeInfo ->
@@ -172,10 +176,60 @@ object SupportedApps {
             { _, _, id, _ -> id == "channel.post_draft.post.input" },
             null,
             arrayOf<String>(),
-            { mattermostMessageListProcessor(it)
+            {
+                mattermostMessageListProcessor(it)
             },
             DetectedApp.MATTER_MOST
 
-        )
-        )
+        ),
+
+        SupportedAppProperty(
+            "com.google.android.apps.messaging",
+            makeGeneralDetector("com.google.android.apps.messaging:id/compose_message_text"),
+            { _, _, id, _ -> id == "com.google.android.apps.messaging:id/compose_message_text" },
+            null,
+            arrayOf<String>(),
+            {
+                googleMessageListProcessor(it)
+            },
+            DetectedApp.GOOGLE_MESSAGES
+        ),
+        SupportedAppProperty(
+            "com.facebook.orca",
+            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> Pair(false,null) },
+            { root, focus, id, pkg -> pkg == "com.facebook.orca" },
+            { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
+            arrayOf<String>(),
+            {
+                telegramMessageListProcessor(it)
+            },
+            DetectedApp.FB_MESSENGER
+        ),
+        SupportedAppProperty(
+            "com.snapchat.android:id",
+            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> Pair(false,null) },
+            { root, focus, id, pkg -> id == "com.snapchat.android:id/chat_input_text_field" },
+            { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
+            arrayOf<String>(),
+            {
+                scMessageListProcessor(it)
+            },
+            DetectedApp.SNAPCHAT
+        ),
+
+        SupportedAppProperty(
+            "com.microsoft.teams:id",
+            makeGeneralDetector("com.microsoft.teams:id/message_area_edit_text"),
+            { _, _, id, _ -> id == "com.microsoft.teams:id/message_area_edit_text" },
+            null,
+            arrayOf<String>(),
+            { node: AccessibilityNodeInfo ->
+                teamsMessageListProcessor(
+                    node,
+                    arrayListOf("com.microsoft.teams:id/rich_text_layout")
+                )
+            },
+            DetectedApp.TEAMS
+        ),
+    )
 }

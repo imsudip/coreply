@@ -179,7 +179,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
             actualMessage = ""
         }
 
-        if (actualMessage == currentText){
+        if (actualMessage == currentText) {
             return
         }
         currentText = actualMessage
@@ -391,7 +391,8 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
                         }
                     }
                 } else {
-                    rect.left += (rect.width() * 0.5).toInt()
+                    rect.left += (rect.width() * 0.25).toInt()
+                    rect.right -= (rect.width() * 0.25).toInt()
                     status = AppSupportStatus.HINT_TEXT
                 }
             } else {
@@ -403,10 +404,10 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         Log.v("CoWA", "Measured rect: $rect, status: $status")
 
         // Update shared state instead of direct overlay calls
-        withContext(Dispatchers.Main) {
-            overlayState?.updateRect(rect)
-            overlayState?.updateNode(node, status)
-        }
+
+        overlayState?.updateRect(rect)
+        overlayState?.updateNode(node, status)
+
 
         if (node.refreshWithExtraData(
                 AccessibilityNodeInfo.EXTRA_DATA_RENDERING_INFO_KEY,
@@ -414,9 +415,9 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
             )
         ) {
             //Log.v("CoWA", "Text size in px: ${node.extraRenderingInfo?.textSizeInPx}")
-            withContext(Dispatchers.Main) {
-                overlayState?.updateTextSize(node.extraRenderingInfo?.textSizeInPx ?: 36f)
-            }
+
+            overlayState?.updateTextSize(node.extraRenderingInfo?.textSizeInPx ?: 36f)
+
         }
         onEditTextUpdate(node, status)
 
@@ -468,7 +469,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
     override fun onSuggestionUpdated(typingInfo: TypingInfo, newSuggestion: String) {
         if (running) {
             overlayState?.updateSuggestion(ai.suggestionStorage.getSuggestion(currentText!!))
-        } else{
+        } else {
             ai.suggestionStorage.clearSuggestion()
         }
     }

@@ -18,12 +18,18 @@ enum class DetectedApp {
     ANDROID_SYSTEM,
     TELEGRAM,
     MATTER_MOST,
+    GOOGLE_MESSAGES,
+    FB_MESSENGER,
+    SNAPCHAT,
+    TEAMS,
+    OTHER,
     NOT_DETECTED
 }
 
 
 fun detectSupportedApp(rootNode: AccessibilityNodeInfo?): Pair<SupportedAppProperty?, AccessibilityNodeInfo?> {
     val inputNode = rootNode?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+//    iterNode(rootNode!!)
     if (inputNode != null) {
         val inputNodeId = inputNode.viewIdResourceName ?: ""
         val inputNodePackage = inputNode.packageName ?: ""
@@ -68,7 +74,7 @@ fun generalDetector(
 /**
  * Checks if a content node is above an input widget in screen coordinates
  */
-private fun isContentNodeAboveInput(
+fun isContentNodeAboveInput(
     contentNode: AccessibilityNodeInfo?,
     inputNode: AccessibilityNodeInfo?
 ): Boolean {
