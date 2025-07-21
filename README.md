@@ -7,20 +7,28 @@
 
 ## Supported Texting Apps
 
-|                                      |                               |
-|--------------------------------------| ----------------------------- |
-| **WhatsApp**                         | **Instagram**                 |
-| ![](./docs/static/whatsapp.gif)      | ![](./docs/static/insta.gif)  |
-| **Tinder**                           | **Signal**                    |
-| ![](./docs/static/tinder.gif)        | ![](./docs/static/signal.gif) |
-| **Notification Replies**             | **Hinge**                     |
-| ![](./docs/static/notifications.gif) | _no screenshot yet_           |
-| **LINE**                             | **Heymandi**                  |
-| _no screenshot yet_                  | _no screenshot yet_           |
-| **Gmail (Limited)**                  | **Telegram**                  |
-| _no screenshot yet_                  | _no screenshot yet_           |
-| **Mattermost**                       |                               |
-| _no screenshot yet_                  |                               |
+| App | Screenshot | Remarks (See notes below) |
+|-----|------------|---------------------------|
+| **WhatsApp** | ![](./docs/static/whatsapp.gif) |                           |
+| **Instagram** | ![](./docs/static/insta.gif) |                           |
+| **Tinder** | ![](./docs/static/tinder.gif) |                           |
+| **Signal** | ![](./docs/static/signal.gif) |                           |
+| **Notification Replies** | ![](./docs/static/notifications.gif) | 1,2                       |
+| **Hinge** | _no screenshot yet_ |                           |
+| **LINE** | _no screenshot yet_ |                           |
+| **Heymandi** | _no screenshot yet_ |                           |
+| **Gmail (Limited)** | _no screenshot yet_ | 3                         |
+| **Telegram** | _no screenshot yet_ |                           |
+| **Mattermost** | _no screenshot yet_ | 2                         |
+| **Facebook Messenger** | _no screenshot yet_ | 1                         |
+| **Google Messages** | _no screenshot yet_ |                           |
+|**Snapchat** | _no screenshot yet_ | 2                         |
+|**Microsoft Teams** | _no screenshot yet_ |                           |
+
+### Remarks
+1. Performance issues: Coreply may not follow smoothly the animations and transitions in the app.
+2. Limited role detection: Coreply cannot detect whether the message is sent or received.
+3. In Gmail, Coreply only works on the quick reply text field at the bottom of the email.
 
 _DISCLAIMER: Coreply is not affiliated with or endorsed by the above-mentioned apps or their parent companies._
 
