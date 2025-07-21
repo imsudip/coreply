@@ -106,9 +106,9 @@ fun notificationMessageListProcessor(node: AccessibilityNodeInfo): MutableList<C
         targetArea.getBoundsInScreen(targetRect)
 
         // Check if the target is above the text input
-        if (targetRect.bottom <= textInputRect.bottom) {
+        if (targetRect.top <= textInputRect.top) {
             // Calculate the vertical distance between the bottom of target and top of input
-            val distance = textInputRect.top - targetRect.bottom
+            val distance = textInputRect.top - targetRect.top
 
             // Update closest target if this one is closer
             if (distance < minDistance) {
@@ -117,6 +117,7 @@ fun notificationMessageListProcessor(node: AccessibilityNodeInfo): MutableList<C
             }
         }
     }
+
     // Process the closest target for chat messages
     // For now, return empty list if no suitable target is found
     return if (closestTarget != null) {
@@ -137,7 +138,7 @@ fun notificationMessageListProcessor(node: AccessibilityNodeInfo): MutableList<C
         }
 
         //Log.v("CoWA", conversationList.toString())
-        return chatMessages
+        chatMessages
     } else {
         mutableListOf()
     }
