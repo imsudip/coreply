@@ -17,11 +17,11 @@
 | **Hinge** | _no screenshot yet_ |                           |
 | **LINE** | _no screenshot yet_ |                           |
 | **Heymandi** | _no screenshot yet_ |                           |
-| **Gmail (Limited)** | _no screenshot yet_ | 3                         |
+| **Gmail** | _no screenshot yet_ | 3                         |
 | **Telegram** | _no screenshot yet_ |                           |
 | **Mattermost** | _no screenshot yet_ | 2                         |
 | **Facebook Messenger** | _no screenshot yet_ | 1                         |
-| **Google Messages** | _no screenshot yet_ |                           |
+| **Google Messages** | _no screenshot yet_ | 1                         |
 |**Snapchat** | _no screenshot yet_ | 2                         |
 |**Microsoft Teams** | _no screenshot yet_ |                           |
 
