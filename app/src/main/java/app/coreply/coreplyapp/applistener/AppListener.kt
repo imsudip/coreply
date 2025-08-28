@@ -138,10 +138,28 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
                 )
                 if (rectArray != null && rectArray.any { it != null }) {
                     status = AppSupportStatus.TYPING
+                    var rtl = false
+                    for (rectF in rectArray) {
+                        if (rectF != null) {
+                            // Check if is RTL by comparing the distance to left and right edges
+                            val distanceToLeft = Math.abs(rectF.left - rect.left)
+                            val distanceToRight = Math.abs(rectF.right - rect.right)
+                            if (distanceToLeft > distanceToRight) {
+                                rtl = true
+                            }
+                            break
+                        }
+                    }
                     for (i in rectArray.indices.reversed()) {
                         val rectF = rectArray[i]
                         if (rectF != null) {
-                            rect.left = rectF.right.toInt()
+                            if (rtl) {
+                                // RTL, align to left edge
+                                rect.right = rectF.left.toInt()
+                            } else {
+                                // LTR, align to right edge
+                                rect.left = rectF.right.toInt()
+                            }
                             rect.top = rectF.top.toInt()
                             rect.bottom = rectF.bottom.toInt()
                             break
@@ -381,10 +399,28 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
                 // For loop in reverse order to get the last cursor position
                 if (rectArray != null && rectArray.any { it != null }) {
                     status = AppSupportStatus.TYPING
+                    var rtl = false
+                    for (rectF in rectArray) {
+                        if (rectF != null) {
+                            // Check if is RTL by comparing the distance to left and right edges
+                            val distanceToLeft = Math.abs(rectF.left - rect.left)
+                            val distanceToRight = Math.abs(rectF.right - rect.right)
+                            if (distanceToLeft > distanceToRight) {
+                                rtl = true
+                            }
+                            break
+                        }
+                    }
                     for (i in rectArray.indices.reversed()) {
                         val rectF = rectArray[i]
                         if (rectF != null) {
-                            rect.left = rectF.right.toInt()
+                            if (rtl) {
+                                // RTL, align to left edge
+                                rect.right = rectF.left.toInt()
+                            } else {
+                                // LTR, align to right edge
+                                rect.left = rectF.right.toInt()
+                            }
                             rect.top = rectF.top.toInt()
                             rect.bottom = rectF.bottom.toInt()
                             break
