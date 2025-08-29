@@ -3,7 +3,7 @@
 ![GitHub License](https://img.shields.io/github/license/coreply/coreply)
 
 ![Coreply banner](./docs/static/narrowbanner.png)
-**Coreply** is an open-source Android app designed to make texting faster and smarter by providing texting suggestions while you type. Whether you're replying to friends, family, or colleagues, Coreply enhances your typing experience with intelligent, context-aware suggestions.
+**Coreply** is an open-source Android app providing texting suggestions while you type. It enhances your typing experience with intelligent, context-aware suggestions.
 
 ## Supported Texting Apps
 
@@ -32,7 +32,7 @@
 
 ### Remarks
 
-1. Performance issues: Coreply may not follow smoothly the animations and transitions in the app.
+1. Performance issues: Coreply may not follow smoothly the animations and transitions.
 2. Limited role detection: Coreply cannot detect whether the message is sent or received.
 3. In Gmail, Coreply only works on the quick reply text field at the bottom of the email.
 
@@ -52,19 +52,19 @@ _DISCLAIMER: Coreply is not affiliated with or endorsed by the above-mentioned a
 
 ### Prerequisites
 
--   Device running **Android 10 or higher** (Android 13 or higher recommended)
--   API key for OpenAI or an OpenAI-compatible inference service, see the Configurations section below.
+-   **Android 11 or higher** (Android 13 or higher recommended)
+-   API Key for OpenAI or an OpenAI-compatible inference API.
 
 ### Installation & Usage
 
-1. Download and install the latest APK from the [releases page](https://github.com/coreply/coreply/releases)
+1. Install the latest APK from the [releases page](https://github.com/coreply/coreply/releases)
 2. Configure the app with your API key, URL and model name (see the section below).
-3. Toggle the switch and grant necessary permissions to enable the service. If you encountered the "Restricted settings" dialog, you can follow [these steps](https://support.google.com/android/answer/12623953?hl=en).
-4. Start typing in your messaging app, and see suggestions appear! Single tap on the suggestion to insert one word, or long press to insert the entire suggestion.
+3. Toggle on the switch and grant necessary permissions. **If you encountered the "Restricted settings" dialog, you can follow [these steps](https://support.google.com/android/answer/12623953?hl=en).**
+4. Start typing in your messaging app, and see suggestions appear!
+    - Single tap on the suggestion to insert one word
+    - Long press to insert the entire suggestion.
 
 ### Configurations
-
-Personal note: I like Gemini.
 
 #### OpenAI
 
@@ -72,9 +72,9 @@ API URL: `https://api.openai.com/v1/`
 
 API Key: [Grab it here](https://platform.openai.com/api-keys)
 
-Model Name: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, or `gpt-4o-mini` depending on your preferences.
+Model Name: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, or `gpt-4o-mini`.
 
-_Note: `gpt-5` models not recommended as they are reasoning models; `mini` variants are recommended for the best cost-performance ratio._
+_`gpt-5` family not recommended as they are reasoning models; `mini` variants are recommended for the best cost-performance ratio._
 
 #### Google AI Studio
 
@@ -84,7 +84,7 @@ API Key: [Grab it here](https://aistudio.google.com/apikey)
 
 Model Name: `gemini-2.0-flash`, `gemini-2.0-flash-lite`, or `gemini-2.5-flash-lite`.
 
-_Note: `gemini-2.5-flash` in AI Studio reasons by default. Therefore not recommended. `gemma-3` family in AI Studio doesn't support system instructions. Thus not compatible._
+_`gemini-2.5-flash` in AI Studio reasons by default. Therefore not recommended. `gemma-3` family in AI Studio doesn't support system instructions. Thus not compatible._
 
 #### Openrouter
 
@@ -92,9 +92,7 @@ API URL: `https://openrouter.ai/api/v1/`
 
 API Key: [Grab it here](https://openrouter.ai/settings/keys)
 
-Model Name: `google/gemini-2.5-flash`, `google/gemini-2.5-flash-lite`, `google/gemini-2.0-flash-001`, `google/gemini-2.0-flash-lite-001`, `openai/gpt-4.1-mini`, `openai/gpt-4.1`, `openai/gpt-oss-20b`, or many more, depending on your preferences.
-
-_Note: Many models are available, and you can experiment with different ones to find the best fit._
+Model Name: `google/gemini-2.5-flash`, `google/gemini-2.5-flash-lite`, `google/gemini-2.0-flash-001`, `google/gemini-2.0-flash-lite-001`, `openai/gpt-4.1-mini`, `openai/gpt-4.1`, or `openai/gpt-oss-20b`.
 
 #### Groq
 
@@ -102,13 +100,15 @@ API URL: `https://api.groq.com/openai/v1/`
 
 API Key: [Grab it here](https://console.groq.com/keys)
 
-Model Name: `openai/gpt-oss-20b`, `llama-3.1-8b-instant`, or `llama-3.3-70b-versatile`, depending on your preferences.
+Model Name: `openai/gpt-oss-20b`, `llama-3.1-8b-instant`, or `llama-3.3-70b-versatile`.
 
 #### Others
 
-Theoretically any OpenAI-compatible endpoint can be used. Just find the proper API URL, API Key, and Model Name in the docs of your chosen provider. The default system prompt works with most mainstream models, but you can edit it to improve results of a specific model.
+Theoretically any OpenAI-compatible endpoint can be used. Find the API URL, API Key, and Model Name in the docs of the provider. The default system prompt works with mainstream models, but you can improve it if needed.
 
-Smaller models (<7B) tend to fail outputting in the desired format.
+Personal note: I like Gemini
+
+Note: Models listed here are just examples. You are welcome to experiment with those not listed. Although smaller models (<7B) tend to fail outputting in the desired format.
 
 ## Build From Source
 
