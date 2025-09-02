@@ -279,13 +279,12 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
     override fun onServiceConnected() {
         super.onServiceConnected()
         val info = this.serviceInfo
-
         info.eventTypes =
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or AccessibilityEvent.TYPE_VIEW_FOCUSED or AccessibilityEvent.TYPE_VIEW_SCROLLED
         info.flags =
             AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
         this.serviceInfo = info
-        Toast.makeText(this, getString(R.string.app_accessibility_started), Toast.LENGTH_SHORT)
+        Toast.makeText(applicationContext, getString(R.string.app_accessibility_started), Toast.LENGTH_SHORT)
             .show()
         val appContext = applicationContext
 

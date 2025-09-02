@@ -92,7 +92,7 @@ fun InlineSuggestionOverlay(
                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             style = Typography().bodyMedium,
             maxLines = 1,
-            overflow = TextOverflow.Visible,
+            overflow = TextOverflow.Ellipsis,
 
         )
 

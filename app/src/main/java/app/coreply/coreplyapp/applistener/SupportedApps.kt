@@ -171,6 +171,28 @@ object SupportedApps {
             DetectedApp.TELEGRAM
         ),
         SupportedAppProperty(
+            "org.telegram.messenger.web",
+            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> telegramDetector(node, "org.telegram.messenger.web") },
+            { root, focus, id, pkg -> pkg == "org.telegram.messenger.web" && telegramDetector(root, "org.telegram.messenger.web").first },
+            { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
+            arrayOf<String>(),
+            {
+                telegramMessageListProcessor(it)
+            },
+            DetectedApp.TELEGRAM
+        ),
+        SupportedAppProperty(
+            "tw.nekomimi.nekogram",
+            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> telegramDetector(node, "tw.nekomimi.nekogram") },
+            { root, focus, id, pkg -> pkg == "tw.nekomimi.nekogram" && telegramDetector(root, "tw.nekomimi.nekogram").first },
+            { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
+            arrayOf<String>(),
+            {
+                telegramMessageListProcessor(it)
+            },
+            DetectedApp.TELEGRAM
+        ),
+        SupportedAppProperty(
             "com.mattermost.rn",
             makeGeneralDetector("channel.post_draft.post.input"),
             { _, _, id, _ -> id == "channel.post_draft.post.input" },
@@ -230,6 +252,20 @@ object SupportedApps {
                 )
             },
             DetectedApp.TEAMS
+        ),
+        SupportedAppProperty(
+            "com.viber.voip",
+            makeGeneralDetector("com.viber.voip:id/send_text"),
+            { _, _, id, _ -> id == "com.viber.voip:id/send_text" },
+            null,
+            arrayOf<String>(),
+            { node: AccessibilityNodeInfo ->
+                generalMessageListProcessor(
+                    node,
+                    arrayListOf("com.viber.voip:id/textMessageView")
+                )
+            },
+            DetectedApp.OTHER
         ),
     )
 }

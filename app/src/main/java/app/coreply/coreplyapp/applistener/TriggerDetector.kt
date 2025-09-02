@@ -97,13 +97,13 @@ fun isContentNodeAboveInput(
     }
 }
 
-fun telegramDetector(node: AccessibilityNodeInfo): Pair<Boolean, AccessibilityNodeInfo?> {
+fun telegramDetector(node: AccessibilityNodeInfo, tgPkgName: String = "org.telegram.messenger"): Pair<Boolean, AccessibilityNodeInfo?> {
     val contentNodes = node.findAccessibilityNodeInfosByViewId("android:id/content")
     if (contentNodes != null && contentNodes.size == 1) {
         val contentNode = contentNodes[0]
-        if (contentNode.packageName == "org.telegram.messenger") {
+        if (contentNode.packageName == tgPkgName) {
             val inputWidget = node.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-            if (inputWidget != null && inputWidget.packageName == "org.telegram.messenger") {
+            if (inputWidget != null && inputWidget.packageName == tgPkgName) {
                 // Verify the content node is above the input widget
                 if (isContentNodeAboveInput(contentNode, inputWidget)) {
                     return Pair(true, inputWidget)

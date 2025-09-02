@@ -63,4 +63,6 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation("androidx.compose.ui:ui-text-google-fonts:1.8.3")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
