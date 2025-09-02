@@ -37,7 +37,7 @@
 
 <sup>1</sup> Performance issues: Coreply may not follow smoothly the animations and transitions.  
 <sup>2</sup> Limited role detection: Coreply cannot detect whether the message is sent or received.  
-<sup>3</sup> In Gmail, Coreply only works on the quick reply text field at the bottom of the email.
+<sup>3</sup> In Gmail, Coreply only works on the quick reply text field at the bottom of the email.  
 <sup>4</sup> Including Direct Download version, Play Store version, and Nekogram.
 
 _DISCLAIMER: Coreply is not affiliated with or endorsed by the above-mentioned apps or their parent companies._
