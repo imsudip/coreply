@@ -11,29 +11,29 @@
 
 ## Supported Texting Apps
 
-|                                                           |
-| --------------------------------------------------------- |
-| **WhatsApp**                                              |
-| <img src="./docs/static/whatsapp.gif" width="400" />      |
-| **Instagram**                                             |
-| <img src="./docs/static/insta.gif" width="400" />         |
-| **Tinder**                                                |
-| <img src="./docs/static/tinder.gif" width="400" />        |
-| **Signal**                                                |
-| <img src="./docs/static/signal.gif" width="400" />        |
-| **Notification Replies**<sup>1,2</sup>                    |
-| <img src="./docs/static/notifications.gif" width="400" /> |
-| **Hinge**                                                 |
-| **LINE**                                                  |
-| **Heymandi**                                              |
-| **Gmail**<sup>3</sup>                                     |
-| **Telegram**<sup>4</sup>                                  |
-| **Mattermost**<sup>2</sup>                                |
-| **Facebook Messenger**<sup>1</sup>                        |
-| **Google Messages**<sup>1</sup>                           |
-| **Snapchat**<sup>2</sup>                                  |
-| **Microsoft Teams**                                       |
-| **Viber**                                                 |
+|                                                                                      |
+| ------------------------------------------------------------------------------------ |
+| **WhatsApp**                                                                         |
+| <img src="./docs/static/whatsapp.gif" style="max-width: 400px; width: 100%;" />      |
+| **Instagram**                                                                        |
+| <img src="./docs/static/insta.gif" style="max-width: 400px; width: 100%;" />         |
+| **Tinder**                                                                           |
+| <img src="./docs/static/tinder.gif" style="max-width: 400px; width: 100%;" />        |
+| **Signal**                                                                           |
+| <img src="./docs/static/signal.gif" style="max-width: 400px; width: 100%;" />        |
+| **Notification Replies**<sup>1,2</sup>                                               |
+| <img src="./docs/static/notifications.gif" style="max-width: 400px; width: 100%;" /> |
+| **Hinge**                                                                            |
+| **LINE**                                                                             |
+| **Heymandi**                                                                         |
+| **Gmail**<sup>3</sup>                                                                |
+| **Telegram**<sup>4</sup>                                                             |
+| **Mattermost**<sup>2</sup>                                                           |
+| **Facebook Messenger**<sup>1</sup>                                                   |
+| **Google Messages**<sup>1</sup>                                                      |
+| **Snapchat**<sup>2</sup>                                                             |
+| **Microsoft Teams**                                                                  |
+| **Viber**                                                                            |
 
 <sup>1</sup> Performance issues: Coreply may not follow smoothly the animations and transitions.  
 <sup>2</sup> Limited role detection: Coreply cannot detect whether the message is sent or received.  
