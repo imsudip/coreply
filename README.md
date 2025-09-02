@@ -5,44 +5,46 @@
 ![Coreply banner](./docs/static/narrowbanner.png)
 **Coreply** is an open-source Android app providing texting suggestions while you type. It enhances your typing experience with intelligent, context-aware suggestions.
 
+<a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/coreply/coreply">
+<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/refs/heads/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60"/>
+</a>
+
 ## Supported Texting Apps
 
-|                                             |
-| ------------------------------------------- |
-| **WhatsApp**                                |
-| ![](./docs/static/whatsapp.gif)             |
-| **Instagram**                               |
-| ![](./docs/static/insta.gif)                |
-| **Tinder**                                  |
-| ![](./docs/static/tinder.gif)               |
-| **Signal**                                  |
-| ![](./docs/static/signal.gif)               |
-| **Notification Replies** (see remarks 1, 2) |
-| ![](./docs/static/notifications.gif)        |
-| **Hinge**                                   |
-| **LINE**                                    |
-| **Heymandi**                                |
-| **Gmail** (see remark 3)                    |
-| **Telegram**                                |
-| **Mattermost** (see remark 2)               |
-| **Facebook Messenger** (see remark 1)       |
-| **Google Messages** (see remark 1)          |
-| **Snapchat** (see remark 2)                 |
-| **Microsoft Teams**                         |
+|                                                           |
+| --------------------------------------------------------- |
+| **WhatsApp**                                              |
+| <img src="./docs/static/whatsapp.gif" width="400" />      |
+| **Instagram**                                             |
+| <img src="./docs/static/insta.gif" width="400" />         |
+| **Tinder**                                                |
+| <img src="./docs/static/tinder.gif" width="400" />        |
+| **Signal**                                                |
+| <img src="./docs/static/signal.gif" width="400" />        |
+| **Notification Replies**<sup>1,2</sup>                    |
+| <img src="./docs/static/notifications.gif" width="400" /> |
+| **Hinge**                                                 |
+| **LINE**                                                  |
+| **Heymandi**                                              |
+| **Gmail**<sup>3</sup>                                     |
+| **Telegram**<sup>4</sup>                                  |
+| **Mattermost**<sup>2</sup>                                |
+| **Facebook Messenger**<sup>1</sup>                        |
+| **Google Messages**<sup>1</sup>                           |
+| **Snapchat**<sup>2</sup>                                  |
+| **Microsoft Teams**                                       |
+| **Viber**                                                 |
 
-### Remarks
-
-1. Performance issues: Coreply may not follow smoothly the animations and transitions.
-2. Limited role detection: Coreply cannot detect whether the message is sent or received.
-3. In Gmail, Coreply only works on the quick reply text field at the bottom of the email.
+<sup>1</sup> Performance issues: Coreply may not follow smoothly the animations and transitions.  
+<sup>2</sup> Limited role detection: Coreply cannot detect whether the message is sent or received.  
+<sup>3</sup> In Gmail, Coreply only works on the quick reply text field at the bottom of the email.
+<sup>4</sup> Including Direct Download version, Play Store version, and Nekogram.
 
 _DISCLAIMER: Coreply is not affiliated with or endorsed by the above-mentioned apps or their parent companies._
 
 ## Features
 
-<div align="center">
   <img src="./docs/static/coreply_demo.gif" width="360" />
-</div>
 
 -   **Real-time AI Suggestions**: Get accurate, context-aware suggestions as you type.
 -   **Customizable LLM Settings**: Supports any inference service having an OpenAI compatible API.
