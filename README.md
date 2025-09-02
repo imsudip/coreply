@@ -68,6 +68,11 @@ _DISCLAIMER: Coreply is not affiliated with or endorsed by the above-mentioned a
 
 ### Configurations
 
+| Chat Completion                                                                                                                       | Fill-in-the-middle (FIM) ✨NEW              |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Wide selection of models; Better multilingual support                                                                                 | Low latency; Uses fewer tokens              |
+| [OpenAI](#openai)<br/>[Google AI Studio](#google-ai-studio)<br/>[Openrouter](#openrouter)<br/>[Groq](#groq)<br/>Any OpenAI-compatible | [Codestral](#codestral-fim-newly-supported) |
+
 #### OpenAI
 
 API URL: `https://api.openai.com/v1/`
@@ -103,6 +108,14 @@ API URL: `https://api.groq.com/openai/v1/`
 API Key: [Grab it here](https://console.groq.com/keys)
 
 Model Name: `openai/gpt-oss-20b`, `llama-3.1-8b-instant`, or `llama-3.3-70b-versatile`.
+
+#### Codestral FIM [Newly supported!]
+
+API URL: `https://api.mistral.ai/v1/fim/`
+
+API Key: [Grab it here](https://console.mistral.ai/api-keys)
+
+Model Name: `codestral-latest`
 
 #### Others
 
