@@ -1,6 +1,8 @@
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/coreply/coreply/total)
 ![GitHub Tag](https://img.shields.io/github/v/tag/coreply/coreply)
 ![GitHub License](https://img.shields.io/github/license/coreply/coreply)
+![Discord](https://img.shields.io/discord/1367457809742172192)
+![Telegram](https://img.shields.io/badge/telegram-group-blue?logo=telegram&link=https://t.me/coreplyappgroup)
 
 ![Coreply banner](./docs/static/narrowbanner.png)
 **Coreply** is an open-source Android app providing texting suggestions while you type. It enhances your typing experience with intelligent, context-aware suggestions.
