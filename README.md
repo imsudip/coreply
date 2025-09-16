@@ -56,7 +56,7 @@ _DISCLAIMER: Coreply is not affiliated with or endorsed by the above-mentioned a
 
 ### Prerequisites
 
--   **Android 11 or higher** (Android 13 or higher recommended)
+-   **Android 8 or higher** (Android 13 or higher recommended)
 -   API Key for OpenAI or an OpenAI-compatible inference API.
 
 ### Installation & Usage
@@ -101,7 +101,7 @@ API URL: `https://openrouter.ai/api/v1/`
 
 API Key: [Grab it here](https://openrouter.ai/settings/keys)
 
-Model Name: `google/gemini-2.5-flash`, `google/gemini-2.5-flash-lite`, `google/gemini-2.0-flash-001`, `google/gemini-2.0-flash-lite-001`, `openai/gpt-4.1-mini`, `openai/gpt-4.1`, or `openai/gpt-oss-20b`.
+Model Name: `google/gemini-2.5-flash`, `google/gemini-2.5-flash-lite`, `google/gemini-2.0-flash-001`, `google/gemini-2.0-flash-lite-001`, `openai/gpt-4.1-mini`, `openai/gpt-4.1`, `mistralai/codestral-2508`, or `openai/gpt-oss-20b`.
 
 #### Groq
 
