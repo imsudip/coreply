@@ -55,13 +55,14 @@ import kotlinx.coroutines.withContext
 open class AppListener : AccessibilityService(), SuggestionUpdateListener {
     private var overlay: Overlay? = null
     private var overlayState: OverlayState? = null
-    private var pixelCalculator: PixelCalculator? = null
+    private var pixelCalculator: PixelCalculator = PixelCalculator(this)
     private var currentApp: SupportedAppProperty? = null
     private var currentExcludeList = arrayOf<String>()
     private var running = false
     private var currentText: String? = null
     private val conversationList = ChatContents()
     open val ai by lazy { CallAI(SuggestionStorageClass(this), this) }
+
 
     // Coroutine scope for background operations
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -107,88 +108,6 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
 
     override fun onInterrupt() {
         overlay!!.disable()
-    }
-
-    // Updated methods to emit state instead of direct calls
-    private fun measureWindow(node: AccessibilityNodeInfo): AppSupportStatus {
-        val rect = Rect()
-        var status: AppSupportStatus = AppSupportStatus.SUPPORTED_UNKOWN
-        node.getBoundsInScreen(rect)
-
-        // Use EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY to get the cursor position
-        val arguments = Bundle()
-        arguments.putInt(
-            AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_START_INDEX,
-            0
-        )
-        arguments.putInt(
-            AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH,
-            node.text?.length ?: 0
-        )
-
-        if (node.refreshWithExtraData(
-                AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY,
-                arguments
-            )
-        ) {
-            if (android.os.Build.VERSION.SDK_INT >= 33) {
-                val rectArray: Array<RectF?>? = node.extras.getParcelableArray(
-                    AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY,
-                    RectF::class.java
-                )
-                if (rectArray != null && rectArray.any { it != null }) {
-                    status = AppSupportStatus.TYPING
-                    var rtl = false
-                    for (rectF in rectArray) {
-                        if (rectF != null) {
-                            // Check if is RTL by comparing the distance to left and right edges
-                            val distanceToLeft = Math.abs(rectF.left - rect.left)
-                            val distanceToRight = Math.abs(rectF.right - rect.right)
-                            if (distanceToLeft > distanceToRight) {
-                                rtl = true
-                            }
-                            break
-                        }
-                    }
-                    for (i in rectArray.indices.reversed()) {
-                        val rectF = rectArray[i]
-                        if (rectF != null) {
-                            if (rtl) {
-                                // RTL, align to left edge
-                                rect.right = rectF.left.toInt()
-                            } else {
-                                // LTR, align to right edge
-                                rect.left = rectF.right.toInt()
-                            }
-                            rect.top = rectF.top.toInt()
-                            rect.bottom = rectF.bottom.toInt()
-                            break
-                        }
-                    }
-                } else {
-                    rect.left += (rect.width() * 0.5).toInt()
-                    status = AppSupportStatus.HINT_TEXT
-                }
-            } else {
-                status = AppSupportStatus.API_BELOW_33
-            }
-        } else {
-            Log.v("CoWA", "Failed to refresh cursor position")
-        }
-
-        // Update state instead of direct overlay calls
-        overlayState?.updateRect(rect)
-        overlayState?.updateNode(node, status)
-
-        if (node.refreshWithExtraData(
-                AccessibilityNodeInfo.EXTRA_DATA_RENDERING_INFO_KEY,
-                arguments
-            )
-        ) {
-            overlayState?.updateTextSize(node.extraRenderingInfo?.textSizeInPx ?: 18f)
-        }
-
-        return status
     }
 
     private fun onEditTextUpdate(node: AccessibilityNodeInfo, status: AppSupportStatus) {
@@ -284,7 +203,11 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         info.flags =
             AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
         this.serviceInfo = info
-        Toast.makeText(applicationContext, getString(R.string.app_accessibility_started), Toast.LENGTH_SHORT)
+        Toast.makeText(
+            applicationContext,
+            getString(R.string.app_accessibility_started),
+            Toast.LENGTH_SHORT
+        )
             .show()
         val appContext = applicationContext
 
@@ -301,7 +224,6 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         } else {
             overlay!!.disable()
         }
-        pixelCalculator = PixelCalculator(appContext)
 
         // Set up reactive state observation
         setupStateObservation()
@@ -367,7 +289,7 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
     /**
      * Internal implementation of measureWindow that runs on background thread
      */
-    private suspend fun measureWindowInternal(node: AccessibilityNodeInfo): AppSupportStatus {
+    private fun measureWindowInternal(node: AccessibilityNodeInfo): AppSupportStatus {
         val rect = Rect()
         var status: AppSupportStatus = AppSupportStatus.SUPPORTED_UNKOWN
 
@@ -390,49 +312,53 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
                 arguments
             )
         ) {
-            if (android.os.Build.VERSION.SDK_INT >= 33) {
-                val rectArray: Array<RectF?>? = node.extras.getParcelableArray(
+
+            val rectArray: Array<RectF?>? = if (android.os.Build.VERSION.SDK_INT >= 33) {
+                node.extras.getParcelableArray(
                     AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY,
                     RectF::class.java
                 )
-                // For loop in reverse order to get the last cursor position
-                if (rectArray != null && rectArray.any { it != null }) {
-                    status = AppSupportStatus.TYPING
-                    var rtl = false
-                    for (rectF in rectArray) {
-                        if (rectF != null) {
-                            // Check if is RTL by comparing the distance to left and right edges
-                            val distanceToLeft = Math.abs(rectF.left - rect.left)
-                            val distanceToRight = Math.abs(rectF.right - rect.right)
-                            if (distanceToLeft > distanceToRight) {
-                                rtl = true
-                            }
-                            break
+            } else {
+                node.extras.getParcelableArray(
+                    AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY,
+                ) as Array<RectF?>?
+            }
+            // For loop in reverse order to get the last cursor position
+            if (rectArray != null && rectArray.any { it != null }) {
+                status = AppSupportStatus.TYPING
+                var rtl = false
+                for (rectF in rectArray) {
+                    if (rectF != null) {
+                        // Check if is RTL by comparing the distance to left and right edges
+                        val distanceToLeft = Math.abs(rectF.left - rect.left)
+                        val distanceToRight = Math.abs(rectF.right - rect.right)
+                        if (distanceToLeft > distanceToRight) {
+                            rtl = true
                         }
+                        break
                     }
-                    for (i in rectArray.indices.reversed()) {
-                        val rectF = rectArray[i]
-                        if (rectF != null) {
-                            if (rtl) {
-                                // RTL, align to left edge
-                                rect.right = rectF.left.toInt()
-                            } else {
-                                // LTR, align to right edge
-                                rect.left = rectF.right.toInt()
-                            }
-                            rect.top = rectF.top.toInt()
-                            rect.bottom = rectF.bottom.toInt()
-                            break
+                }
+                for (i in rectArray.indices.reversed()) {
+                    val rectF = rectArray[i]
+                    if (rectF != null) {
+                        if (rtl) {
+                            // RTL, align to left edge
+                            rect.right = rectF.left.toInt()
+                        } else {
+                            // LTR, align to right edge
+                            rect.left = rectF.right.toInt()
                         }
+                        rect.top = rectF.top.toInt()
+                        rect.bottom = rectF.bottom.toInt()
+                        break
                     }
-                } else {
-                    rect.left += (rect.width() * 0.25).toInt()
-                    rect.right -= (rect.width() * 0.25).toInt()
-                    status = AppSupportStatus.HINT_TEXT
                 }
             } else {
-                status = AppSupportStatus.API_BELOW_33
+                rect.left += (rect.width() * 0.25).toInt()
+                rect.right -= (rect.width() * 0.25).toInt()
+                status = AppSupportStatus.HINT_TEXT
             }
+
         } else {
             Log.v("CoWA", "Failed to refresh cursor position")
         }
@@ -451,10 +377,20 @@ open class AppListener : AccessibilityService(), SuggestionUpdateListener {
         ) {
             //Log.v("CoWA", "Text size in px: ${node.extraRenderingInfo?.textSizeInPx}")
 
-            overlayState?.updateTextSize(node.extraRenderingInfo?.textSizeInPx ?: 36f)
+            overlayState?.updateTextSize(
+                if (android.os.Build.VERSION.SDK_INT >= 30 && node.extraRenderingInfo != null) {
+                    node.extraRenderingInfo!!.textSizeInPx
+                } else {
+                    pixelCalculator.spToPx(
+                        18f
+                    )
+                }
+            )
 
         }
-        onEditTextUpdate(node, status)
+        onEditTextUpdate(
+            node, status
+        )
 
         return status
     }

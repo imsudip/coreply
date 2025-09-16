@@ -103,7 +103,7 @@ fun telegramDetector(node: AccessibilityNodeInfo, tgPkgName: String = "org.teleg
         val contentNode = contentNodes[0]
         if (contentNode.packageName == tgPkgName) {
             val inputWidget = node.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-            if (inputWidget != null && inputWidget.packageName == tgPkgName) {
+            if (inputWidget != null && inputWidget.packageName == tgPkgName && inputWidget.className == "android.widget.EditText") {
                 // Verify the content node is above the input widget
                 if (isContentNodeAboveInput(contentNode, inputWidget)) {
                     return Pair(true, inputWidget)
@@ -117,7 +117,7 @@ fun telegramDetector(node: AccessibilityNodeInfo, tgPkgName: String = "org.teleg
 fun iterNode(node: AccessibilityNodeInfo) {
     Log.v(
         "CoWA",
-        "iterNode: node=${node.className}, text=${node.text}, contentDescription=${node.contentDescription}, viewId=${node.viewIdResourceName}"
+        "iterNode: node=${node.className}, text=${node.text}, contentDescription=${node.contentDescription}, viewId=${node.viewIdResourceName}, rect=${Rect().also { node.getBoundsInScreen(it) }}"
     )
     for (i in 0 until node.childCount) {
         val child = node.getChild(i)

@@ -42,6 +42,8 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import app.coreply.coreplyapp.applistener.AppSupportStatus
+import app.coreply.coreplyapp.data.PreferencesManager
+import app.coreply.coreplyapp.data.SuggestionPresentationType
 import app.coreply.coreplyapp.theme.CoreplyTheme
 import app.coreply.coreplyapp.ui.compose.InlineSuggestionOverlay
 import app.coreply.coreplyapp.ui.compose.LifeCycleThings
@@ -58,7 +60,7 @@ import java.util.Locale
 data class SuggestionParts(val inline: String?, val trailing: String?)
 
 class Overlay(
-    context: Context?,
+    context: Context,
     val windowManager: WindowManager,
     private val overlayState: OverlayState
 ) : ContextWrapper(context), ViewModelStoreOwner {
@@ -83,6 +85,7 @@ class Overlay(
 
     override val viewModelStore = ViewModelStore()
     private val lifeCycleThings = LifeCycleThings()
+    private val preferencesManager: PreferencesManager = PreferencesManager.getInstance(context)
 
     init {
         pixelCalculator = PixelCalculator(this)
@@ -142,7 +145,12 @@ class Overlay(
         mainParams.gravity = Gravity.TOP or Gravity.START
         mainParams.height = DP48
         mainParams.alpha = 1.0f
-        mainParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            mainParams.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        } else if (android.os.Build.VERSION.SDK_INT >= 28) {
+            mainParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
 
         // Credit: https://stackoverflow.com/questions/39671343/how-to-move-a-view-via-windowmanager-updateviewlayout-without-any-animation
         val className = "android.view.WindowManager\$LayoutParams"
@@ -168,7 +176,12 @@ class Overlay(
         trailingParams.height = DP20
         trailingParams.alpha = 1.0f
         trailingParams.x = DP8
-        trailingParams.layoutInDisplayCutoutMode =WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            trailingParams.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        } else if (android.os.Build.VERSION.SDK_INT >= 28) {
+            trailingParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
     }
 
     // Update reactive state method to use shared state directly
@@ -312,14 +325,14 @@ class Overlay(
 
             trailingParams.y = chatEntryRect.bottom
 
-            // Show/hide overlays based on content
-            if (uiState.inlineText.isBlank()) {
+            // Show/hide overlays based on content and preferences
+            if (uiState.inlineText.isBlank() && preferencesManager.suggestionPresentationTypeState.value != SuggestionPresentationType.BUBBLE) {
                 removeInlineOverlay()
             } else {
                 showInlineOverlay()
             }
 
-            if (uiState.trailingText.isBlank()) {
+            if (uiState.trailingText.isBlank() && preferencesManager.suggestionPresentationTypeState.value != SuggestionPresentationType.INLINE) {
                 removeTrailingOverlay()
             } else {
                 trailingParams.width = trailingTextWidth + DP20 + DP8

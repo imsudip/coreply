@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.coreply.coreplyapp.data.PreferencesManager
+import app.coreply.coreplyapp.data.SuggestionPresentationType
 import app.coreply.coreplyapp.utils.GlobalPref
 import kotlinx.coroutines.launch
 
@@ -19,7 +20,8 @@ data class SettingsUiState(
     val customModelName: String = "gpt-4.1-mini",
     val customSystemPrompt: String = "",
     val temperature: Float = 0.3f,
-    val topP: Float = 0.5f
+    val topP: Float = 0.5f,
+    val suggestionPresentationType: SuggestionPresentationType = SuggestionPresentationType.BOTH
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -46,7 +48,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             customModelName = preferencesManager.customModelNameState.value,
             customSystemPrompt = preferencesManager.customSystemPromptState.value,
             temperature = preferencesManager.temperatureState.value,
-            topP = preferencesManager.topPState.value
+            topP = preferencesManager.topPState.value,
+            suggestionPresentationType = preferencesManager.suggestionPresentationTypeState.value
         )
     }
     
@@ -101,6 +104,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         uiState = uiState.copy(topP = topP)
         viewModelScope.launch { 
             preferencesManager.updateTopP(topP)
+        }
+    }
+
+    fun updateSuggestionPresentationType(type: SuggestionPresentationType) {
+        uiState = uiState.copy(suggestionPresentationType = type)
+        viewModelScope.launch {
+            preferencesManager.updateSuggestionPresentationType(type)
         }
     }
 }

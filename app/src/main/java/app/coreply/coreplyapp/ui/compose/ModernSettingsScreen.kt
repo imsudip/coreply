@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import app.coreply.coreplyapp.data.SuggestionPresentationType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +36,10 @@ fun ModernSettingsScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    var expandMenu by remember { mutableStateOf(false) }
+    val uiState = viewModel.uiState
+
+    val suggestionPresentationTypeStrings = listOf("Bubble below text field only", "Inline only", "Bubble and inline")
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -47,7 +52,6 @@ fun ModernSettingsScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    val uiState = viewModel.uiState
 
     Column(
         modifier = Modifier
@@ -66,7 +70,7 @@ fun ModernSettingsScreen(
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -101,6 +105,53 @@ fun ModernSettingsScreen(
                     }
                 )
             }
+
+            ExposedDropdownMenuBox(
+                expanded = expandMenu,
+                onExpandedChange = { expandMenu = it },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = suggestionPresentationTypeStrings[uiState.suggestionPresentationType.ordinal],
+                    readOnly = true,
+                    onValueChange = {},
+                    label = { Text("Suggestion mode") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = expandMenu
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(MenuAnchorType.PrimaryEditable, true)
+
+                )
+                ExposedDropdownMenu(
+                    expanded = expandMenu,
+                    onDismissRequest = { expandMenu = false },
+                ) {
+                    suggestionPresentationTypeStrings.forEachIndexed { index, selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption) },
+                            onClick = {
+                                viewModel.updateSuggestionPresentationType(
+                                    SuggestionPresentationType.fromInt(index)
+                                )
+                                expandMenu = false
+                            },
+                            leadingIcon = {
+                                if (uiState.suggestionPresentationType.ordinal == index) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
         }
         CustomApiSettingsSection(viewModel)
 
@@ -129,7 +180,7 @@ fun CustomApiSettingsSection(viewModel: SettingsViewModel) {
 
             value = uiState.customApiUrl,
             onValueChange = viewModel::updateCustomApiUrl,
-            label = { Text("API URL") },
+            label = { Text("Base URL") },
             supportingText = { Text("OpenAI compatible API endpoint") },
             modifier = Modifier
                 .fillMaxWidth()
