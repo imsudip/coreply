@@ -21,13 +21,14 @@ val nodeComparator: Comparator<AccessibilityNodeInfo> =
 
 fun generalMessageListProcessor(
     node: AccessibilityNodeInfo,
-    messageWidgets: ArrayList<String>
+    messageWidgets: ArrayList<String>,
+    getChild: (AccessibilityNodeInfo) -> AccessibilityNodeInfo = { it }
 ): MutableList<ChatMessage> {
     val chatWidgets: MutableList<AccessibilityNodeInfo> = ArrayList<AccessibilityNodeInfo>()
     val chatMessages: MutableList<ChatMessage> = ArrayList<ChatMessage>()
 
     for (messageWidget in messageWidgets) {
-        chatWidgets.addAll(node.findAccessibilityNodeInfosByViewId(messageWidget))
+        chatWidgets.addAll(node.findAccessibilityNodeInfosByViewId(messageWidget).map(getChild))
     }
     chatWidgets.sortWith(nodeComparator)
 

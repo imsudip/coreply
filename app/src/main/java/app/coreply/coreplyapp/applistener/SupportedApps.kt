@@ -172,8 +172,18 @@ object SupportedApps {
         ),
         SupportedAppProperty(
             "org.telegram.messenger.web",
-            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> telegramDetector(node, "org.telegram.messenger.web") },
-            { root, focus, id, pkg -> pkg == "org.telegram.messenger.web" && telegramDetector(root, "org.telegram.messenger.web").first },
+            { node: AccessibilityNodeInfo, event: AccessibilityEvent? ->
+                telegramDetector(
+                    node,
+                    "org.telegram.messenger.web"
+                )
+            },
+            { root, focus, id, pkg ->
+                pkg == "org.telegram.messenger.web" && telegramDetector(
+                    root,
+                    "org.telegram.messenger.web"
+                ).first
+            },
             { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
             arrayOf<String>(),
             {
@@ -183,8 +193,18 @@ object SupportedApps {
         ),
         SupportedAppProperty(
             "tw.nekomimi.nekogram",
-            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> telegramDetector(node, "tw.nekomimi.nekogram") },
-            { root, focus, id, pkg -> pkg == "tw.nekomimi.nekogram" && telegramDetector(root, "tw.nekomimi.nekogram").first },
+            { node: AccessibilityNodeInfo, event: AccessibilityEvent? ->
+                telegramDetector(
+                    node,
+                    "tw.nekomimi.nekogram"
+                )
+            },
+            { root, focus, id, pkg ->
+                pkg == "tw.nekomimi.nekogram" && telegramDetector(
+                    root,
+                    "tw.nekomimi.nekogram"
+                ).first
+            },
             { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
             arrayOf<String>(),
             {
@@ -218,7 +238,7 @@ object SupportedApps {
         ),
         SupportedAppProperty(
             "com.facebook.orca",
-            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> Pair(false,null) },
+            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> Pair(false, null) },
             { root, focus, id, pkg -> pkg == "com.facebook.orca" },
             { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
             arrayOf<String>(),
@@ -229,7 +249,7 @@ object SupportedApps {
         ),
         SupportedAppProperty(
             "com.snapchat.android:id",
-            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> Pair(false,null) },
+            { node: AccessibilityNodeInfo, event: AccessibilityEvent? -> Pair(false, null) },
             { root, focus, id, pkg -> id == "com.snapchat.android:id/chat_input_text_field" },
             { node: AccessibilityNodeInfo -> generalTextInputFinder(node) },
             arrayOf<String>(),
@@ -267,5 +287,20 @@ object SupportedApps {
             },
             DetectedApp.OTHER
         ),
+        SupportedAppProperty(
+            pkgName = "com.discord",
+            triggerDetector = makeGeneralDetector("com.discord:id/chat_input_edit_text"),
+            inputJudger = { _, _, id, _ -> id == "com.discord:id/chat_input_edit_text" },
+            textInputFinder = null,
+            excludeWidgets = arrayOf<String>(),
+            messageListProcessor = { node: AccessibilityNodeInfo ->
+                generalMessageListProcessor(
+                    node = node,
+                    messageWidgets = arrayListOf("com.discord:id/accessories_view"),
+                    getChild = { msgNode: AccessibilityNodeInfo -> if (msgNode.childCount > 0) msgNode.getChild(0) else msgNode }
+                )
+            },
+            typeEnum = DetectedApp.OTHER
+        )
     )
 }
