@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import app.coreply.coreplyapp.applistener.AppSupportStatus
+import app.coreply.coreplyapp.data.SuggestionPresentationType
 
 data class OverlayUiState(
     val inlineText: String = "",
@@ -46,18 +47,18 @@ class OverlayViewModel : ViewModel() {
         uiState = uiState.copy(showBubbleBackground = showBackground)
     }
 
-    fun updateSuggestion(suggestion: String?, textActualWidth: Float, chatEntryWidth: Int, status: AppSupportStatus) {
+    fun updateSuggestion(suggestion: String?, textActualWidth: Float, chatEntryWidth: Int, status: AppSupportStatus, presentationType: SuggestionPresentationType) {
         val suggestion = suggestion ?: ""
         
         when {
-            status == AppSupportStatus.API_BELOW_33 -> {
+            status == AppSupportStatus.API_BELOW_33 || presentationType == SuggestionPresentationType.BUBBLE -> {
                 uiState = uiState.copy(
                     inlineText = "",
                     trailingText = suggestion.trimEnd(),
                     showBubbleBackground = false
                 )
             }
-            textActualWidth > chatEntryWidth -> {
+            textActualWidth > chatEntryWidth && presentationType != SuggestionPresentationType.INLINE -> {
                 uiState = uiState.copy(
                     inlineText = suggestion.trimEnd(),
                     trailingText = suggestion.trimEnd(),

@@ -43,7 +43,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import app.coreply.coreplyapp.applistener.AppSupportStatus
 import app.coreply.coreplyapp.data.PreferencesManager
-import app.coreply.coreplyapp.data.SuggestionPresentationType
 import app.coreply.coreplyapp.theme.CoreplyTheme
 import app.coreply.coreplyapp.ui.compose.InlineSuggestionOverlay
 import app.coreply.coreplyapp.ui.compose.LifeCycleThings
@@ -326,13 +325,13 @@ class Overlay(
             trailingParams.y = chatEntryRect.bottom
 
             // Show/hide overlays based on content and preferences
-            if (uiState.inlineText.isBlank() && preferencesManager.suggestionPresentationTypeState.value != SuggestionPresentationType.BUBBLE) {
+            if (uiState.inlineText.isBlank()) {
                 removeInlineOverlay()
             } else {
                 showInlineOverlay()
             }
 
-            if (uiState.trailingText.isBlank() && preferencesManager.suggestionPresentationTypeState.value != SuggestionPresentationType.INLINE) {
+            if (uiState.trailingText.isBlank()) {
                 removeTrailingOverlay()
             } else {
                 trailingParams.width = trailingTextWidth + DP20 + DP8
@@ -359,7 +358,8 @@ class Overlay(
                     suggestion,
                     textWidth,
                     currentState.chatEntryWidth,
-                    currentState.status
+                    currentState.status,
+                    preferencesManager.suggestionPresentationTypeState.value
                 )
                 lifeCycleThings.refreshLifecycle()
                 update()
