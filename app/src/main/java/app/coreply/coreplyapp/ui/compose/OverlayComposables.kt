@@ -89,7 +89,7 @@ fun InlineSuggestionOverlay(
             color = if (showBackground)
                 MaterialTheme.colorScheme.onSecondaryContainer
             else
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                Color(0xEE999999), // A color that fits both light and dark backgrounds
             style = Typography().bodyMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
