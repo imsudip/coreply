@@ -19,28 +19,35 @@
 
 package app.coreply.coreplyapp.ui.compose
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -62,7 +69,7 @@ fun InlineSuggestionOverlay(
     Box(
         modifier = modifier
             .wrapContentWidth(if (showBackground) { Alignment.End } else { Alignment.Start })
-            .wrapContentHeight(if (showBackground) { Alignment.CenterVertically } else { Alignment.Bottom }) // Adjust height based on background visibility
+            .wrapContentHeight(if (showBackground) { Alignment.CenterVertically } else { Alignment.Bottom })
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -108,12 +115,23 @@ fun TrailingSuggestionOverlay(
     text: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    isExpanded: Boolean,
+    onExpand: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val chevronRotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f)
+
     Surface(
         modifier = modifier
-            .wrapContentWidth(Alignment.Start)
-            .fillMaxHeight()
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+            .then(
+                if (isExpanded) {
+                    Modifier.wrapContentHeight(Alignment.Top)
+                } else {
+                    Modifier.height(20.dp)
+                }
+            )
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -123,21 +141,35 @@ fun TrailingSuggestionOverlay(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.secondaryContainer,
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .fillMaxHeight()
-                .wrapContentWidth(Alignment.Start)
-                .padding(horizontal = 10.dp),
-            contentAlignment = Alignment.CenterStart
+                .fillMaxWidth()
+                .padding( horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = text,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 style = Typography().bodyMedium,
                 textAlign = TextAlign.Start,
-                maxLines = 1,
-                modifier = Modifier.wrapContentWidth(Alignment.Start)
+                maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Expand",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier
+                    .rotate(chevronRotation)
+                    .combinedClickable(
+                        onClick = onExpand,
+                        onLongClick = onExpand,
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                    )
             )
         }
     }

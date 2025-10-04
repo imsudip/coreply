@@ -31,13 +31,18 @@ data class OverlayUiState(
     val trailingText: String = "",
     val inlineTextSize: Float = 18f,
     val showBubbleBackground: Boolean = false,
-    val isRunning: Boolean = false
+    val isRunning: Boolean = false,
+    val isTrailingExpanded: Boolean = false
 )
 
 class OverlayViewModel : ViewModel() {
-    
+
     var uiState by mutableStateOf(OverlayUiState())
         private set
+
+    fun toggleTrailingExpanded() {
+        uiState = uiState.copy(isTrailingExpanded = !uiState.isTrailingExpanded)
+    }
 
     fun updateTextSize(textSize: Float) {
         uiState = uiState.copy(inlineTextSize = textSize)
@@ -49,7 +54,7 @@ class OverlayViewModel : ViewModel() {
 
     fun updateSuggestion(suggestion: String?, textActualWidth: Float, chatEntryWidth: Int, status: AppSupportStatus, presentationType: SuggestionPresentationType) {
         val suggestion = suggestion ?: ""
-        
+
         when {
             status == AppSupportStatus.API_BELOW_33 || presentationType == SuggestionPresentationType.BUBBLE -> {
                 uiState = uiState.copy(
@@ -83,7 +88,8 @@ class OverlayViewModel : ViewModel() {
         uiState = uiState.copy(
             isRunning = false,
             inlineText = "",
-            trailingText = ""
+            trailingText = "",
+            isTrailingExpanded = false
         )
     }
 }

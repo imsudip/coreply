@@ -129,7 +129,9 @@ class Overlay(
                         TrailingSuggestionOverlay(
                             text = uiState.trailingText,
                             onClick = { onTrailingClick() },
-                            onLongClick = { onTrailingLongClick() }
+                            onLongClick = { onTrailingLongClick() },
+                            isExpanded = uiState.isTrailingExpanded,
+                            onExpand = { onTrailingExpandClick() }
                         )
                     }
                 }
@@ -214,6 +216,12 @@ class Overlay(
     fun onTrailingLongClick() {
         val uiState = viewModel.uiState
         performFullTextAction(uiState.trailingText)
+    }
+
+    private fun onTrailingExpandClick() {
+        viewModel.toggleTrailingExpanded()
+        update()
+        lifeCycleThings.refreshLifecycle()
     }
 
     private fun tokenizeText(input: String): List<String> {
@@ -310,7 +318,6 @@ class Overlay(
             val showBubbleBackground = uiState.showBubbleBackground
             viewModel.updateBackgroundVisibility(showBubbleBackground)
             val inlineTextWidth = dummyPaint.measureText(uiState.inlineText).toInt()
-            val trailingTextWidth = dummyPaint.measureText(uiState.trailingText).toInt()
 
             if (showBubbleBackground) {
                 mainParams.width =
@@ -334,7 +341,12 @@ class Overlay(
             if (uiState.trailingText.isBlank()) {
                 removeTrailingOverlay()
             } else {
-                trailingParams.width = trailingTextWidth + DP20 + DP8
+                if (uiState.isTrailingExpanded) {
+                    trailingParams.height = WindowManager.LayoutParams.WRAP_CONTENT
+                } else {
+                    trailingParams.height = pixelCalculator.dpToPx(36)
+                }
+                trailingParams.width = WindowManager.LayoutParams.MATCH_PARENT
                 showTrailingOverlay()
             }
 
